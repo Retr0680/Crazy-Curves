@@ -14,15 +14,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Setup extern directory
-      run: |
-        if (Test-Path -Path "extern") {
-            Remove-Item -Recurse -Force extern
-        }
-        mkdir extern
-        cd extern
-        # SDK setup will be manual for now due to Adobe licensing
-
     - name: Clean and Configure CMake
       run: |
         if (Test-Path -Path "build") {
@@ -30,6 +21,7 @@ jobs:
         }
         mkdir build
         cd build
+        # Build core components only without AE SDK
         cmake -S .. -B .
 
     - name: Build
@@ -40,6 +32,6 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: CrazyCurves-plugin
-        path: build/Release/CrazyCurves.aex
+        name: CrazyCurves-core
+        path: build/Release/*.dll
         retention-days: 90
