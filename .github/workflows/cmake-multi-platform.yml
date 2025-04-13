@@ -17,8 +17,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure CMake
+      shell: pwsh
       run: |
-        mkdir build
+        if (Test-Path -Path "build") {
+            Remove-Item -Recurse -Force build
+        }
+        New-Item -ItemType Directory -Path build
         cd build
         cmake -B . -S .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
