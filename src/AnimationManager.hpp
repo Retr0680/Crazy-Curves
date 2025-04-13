@@ -1,32 +1,46 @@
 #pragma once
+#include "AE_Effect.h"
+#include "AE_EffectCB.h"
+#include "CrazyCurves.h"
 #include <vector>
-#include <chrono>
-#include "CurveData.hpp"
-
-struct Keyframe {
-    float time;
-    CurveData curve;
-    
-    bool operator<(const Keyframe& other) const {
-        return time < other.time;
-    }
-};
 
 class AnimationManager {
 public:
-    static AnimationManager& getInstance() {
-        static AnimationManager instance;
-        return instance;
-    }
+    struct Keyframe {
+        PF_FpLong time;
+        CurveData curve;
+    };
 
-    void addKeyframe(float time, const CurveData& curve);
-    void removeKeyframe(float time);
-    CurveData interpolateAtTime(float time);
-    void clear();
-    float getDuration() const;
-    
+    struct KeyframeCache {
+        PF_Boolean dirty;
+        PF_FpLong cachedTime;
+        CurveData cachedCurve;
+    };
+
+    AnimationManager();
+
+    PF_Err AddKeyframe(
+        PF_InData* in_data,
+        const CurveData* curve,
+        PF_FpLong time);
+
+    PF_Err RemoveKeyframe(PF_FpLong time);
+
+    PF_Err EvaluateAtTime(
+        PF_InData* in_data,
+        PF_FpLong time,
+        CurveData* result);
+
 private:
-    AnimationManager() = default;
     std::vector<Keyframe> keyframes;
-    std::chrono::steady_clock::time_point startTime;
+    KeyframeCache keyframeCache;
+    PF_FpLong currentTime;
+
+    PF_Err InterpolateCurves(
+        const CurveData* c1,
+        const CurveData* c2,
+        PF_FpLong t,
+        CurveData* result);
+
+    void InitializeKeyframeCache();
 };
