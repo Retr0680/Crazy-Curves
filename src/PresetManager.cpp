@@ -7,26 +7,29 @@ PresetManager::PresetManager() {
 void PresetManager::loadDefaultPresets() {
     // Linear preset
     CurveData linear;
-    linear.addPoint(0.0f, 0.0f);
-    linear.addPoint(1.0f, 1.0f);
+    linear.reset();
     savePreset("Linear", linear);
 
     // S-Curve preset
     CurveData sCurve;
-    sCurve.addPoint(0.0f, 0.0f);
+    sCurve.reset();
     sCurve.addPoint(0.25f, 0.15f);
-    sCurve.addPoint(0.5f, 0.5f);
     sCurve.addPoint(0.75f, 0.85f);
-    sCurve.addPoint(1.0f, 1.0f);
     savePreset("S-Curve", sCurve);
 
-    // Strong Contrast preset
+    // Contrast preset
     CurveData contrast;
-    contrast.addPoint(0.0f, 0.0f);
-    contrast.addPoint(0.3f, 0.2f);
-    contrast.addPoint(0.7f, 0.8f);
-    contrast.addPoint(1.0f, 1.0f);
-    savePreset("Strong Contrast", contrast);
+    contrast.reset();
+    contrast.addPoint(0.25f, 0.1f);
+    contrast.addPoint(0.75f, 0.9f);
+    savePreset("Contrast", contrast);
+
+    // Negative preset
+    CurveData negative;
+    negative.reset();
+    negative.updatePoint(0, 0.0f, 1.0f);
+    negative.updatePoint(1, 1.0f, 0.0f);
+    savePreset("Negative", negative);
 }
 
 void PresetManager::savePreset(const std::string& name, const CurveData& curve) {

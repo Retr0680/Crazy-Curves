@@ -1,22 +1,32 @@
 #pragma once
-#include "AE_Effect.h"  // Changed from CurvesUI.hpp
-
-enum class Channel {
-    RGB,
-    RED,
-    GREEN,
-    BLUE
-};
+#include <array>
+#include <memory>
+#include "CurveData.hpp"
 
 class ChannelManager {
 public:
+    enum class Channel {
+        RGB = 0,
+        RED,
+        GREEN,
+        BLUE,
+        ALPHA,
+        COUNT
+    };
+
     ChannelManager();
-    void setCurrentChannel(Channel channel);
-    Channel getCurrentChannel() const;
-    void drawChannelSelector(PF_EffectWorld* world, PF_Point origin);
-    bool handleChannelSelection(PF_Point mousePos);
+    ~ChannelManager() = default;
+
+    void setActiveChannel(Channel channel) { activeChannel = channel; }
+    Channel getActiveChannel() const { return activeChannel; }
+    
+    CurveData* getCurve(Channel channel);
+    const CurveData* getCurve(Channel channel) const;
+    
+    void resetChannel(Channel channel);
+    void resetAllChannels();
 
 private:
-    Channel currentChannel;
-    PF_Rect selectorBounds[4];
+    std::array<std::unique_ptr<CurveData>, static_cast<size_t>(Channel::COUNT)> curves;
+    Channel activeChannel;
 };

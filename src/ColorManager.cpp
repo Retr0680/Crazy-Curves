@@ -13,38 +13,29 @@ void ColorManager::initializeLookupTables() {
     }
 }
 
-void ColorManager::processPixel8(const PF_Pixel8* input, PF_Pixel8* output, ColorChannel channel) {
-    if (channel == ColorChannel::RGB) {
-        output->red = lookupTables[0][input->red] * 255.0f;
-        output->green = lookupTables[0][input->green] * 255.0f;
-        output->blue = lookupTables[0][input->blue] * 255.0f;
-    } else {
-        int channelIndex = static_cast<int>(channel);
-        output->red = (channel == ColorChannel::RED) ? 
-            lookupTables[channelIndex][input->red] * 255.0f : input->red;
-        output->green = (channel == ColorChannel::GREEN) ? 
-            lookupTables[channelIndex][input->green] * 255.0f : input->green;
-        output->blue = (channel == ColorChannel::BLUE) ? 
-            lookupTables[channelIndex][input->blue] * 255.0f : input->blue;
+void ColorManager::processPixel8(const unsigned char* input, unsigned char* output, ColorChannel channel) {
+    int channelIndex = static_cast<int>(channel);
+    
+    for (int i = 0; i < 4; ++i) {
+        if (channel == ColorChannel::RGB || i == channelIndex) {
+            float value = input[i] / 255.0f;
+            output[i] = static_cast<unsigned char>(getCurveValue(channel, value) * 255.0f);
+        } else {
+            output[i] = input[i];
+        }
     }
-    output->alpha = input->alpha;
 }
 
-void ColorManager::processPixelFloat(const PF_PixelFloat* input, PF_PixelFloat* output, ColorChannel channel) {
-    if (channel == ColorChannel::RGB) {
-        output->red = interpolateLookup(lookupTables[0], input->red);
-        output->green = interpolateLookup(lookupTables[0], input->green);
-        output->blue = interpolateLookup(lookupTables[0], input->blue);
-    } else {
-        int channelIndex = static_cast<int>(channel);
-        output->red = (channel == ColorChannel::RED) ? 
-            interpolateLookup(lookupTables[channelIndex], input->red) : input->red;
-        output->green = (channel == ColorChannel::GREEN) ? 
-            interpolateLookup(lookupTables[channelIndex], input->green) : input->green;
-        output->blue = (channel == ColorChannel::BLUE) ? 
-            interpolateLookup(lookupTables[channelIndex], input->blue) : input->blue;
+void ColorManager::processPixelFloat(const float* input, float* output, ColorChannel channel) {
+    int channelIndex = static_cast<int>(channel);
+    
+    for (int i = 0; i < 4; ++i) {
+        if (channel == ColorChannel::RGB || i == channelIndex) {
+            output[i] = getCurveValue(channel, input[i]);
+        } else {
+            output[i] = input[i];
+        }
     }
-    output->alpha = input->alpha;
 }
 
 void ColorManager::setCurveValue(ColorChannel channel, float input, float output) {

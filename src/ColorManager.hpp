@@ -1,5 +1,4 @@
 #pragma once
-#include "AE_Effect.h"
 #include <array>
 
 enum class ColorChannel {
@@ -14,8 +13,8 @@ class ColorManager {
 public:
     ColorManager();
     
-    void processPixel8(const PF_Pixel8* input, PF_Pixel8* output, ColorChannel channel);
-    void processPixelFloat(const PF_PixelFloat* input, PF_PixelFloat* output, ColorChannel channel);
+    void processPixel8(const unsigned char* input, unsigned char* output, ColorChannel channel);
+    void processPixelFloat(const float* input, float* output, ColorChannel channel);
     
     void setCurveValue(ColorChannel channel, float input, float output);
     float getCurveValue(ColorChannel channel, float input) const;

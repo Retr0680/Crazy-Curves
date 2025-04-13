@@ -1,120 +1,96 @@
-#include "CurvesUI.h"
+#include "CurvesUI.hpp"
+#include <algorithm>
+#include <cstring>
 
 const PF_Pixel CurvesUI::GRID_COLOR = {32, 32, 32, 255};
 const PF_Pixel CurvesUI::CURVE_COLOR = {255, 255, 255, 255};
 const PF_Pixel CurvesUI::POINT_COLOR = {255, 128, 0, 255};
 
-CurvesUI::CurvesUI() {}
-
-PF_Err CurvesUI::drawCurve(PF_InData* in_data, PF_OutData* out_data, 
-                          PF_ParamDef* params[], const CurveData& curveData,
-                          PF_EffectWorld* world) {
-    PF_Err err = PF_Err_NONE;
-    
-    // Draw background grid
-    drawGrid(world);
-    
-    // Draw curve line
-    drawCurveLine(world, curveData);
-    
-    // Draw control points
-    drawCurvePoints(world, curveData);
-    
-    return err;
+CurvesUI::CurvesUI() 
+    : activeChannel(ColorChannel::RGB)
+    , selectedPoint(-1)
+    , isDragging(false) {
+    for (int i = 0; i < 5; ++i) {
+        curves[i] = std::make_unique<CurveData>();
+    }
 }
 
-void CurvesUI::drawGrid(PF_EffectWorld* world) {
+CurvesUI::~CurvesUI() = default;
+
+void CurvesUI::draw(unsigned char* buffer, int width, int height, int stride) {
+    // Clear background
+    std::memset(buffer, 0, stride * height);
+    
+    drawGrid(buffer, width, height, stride);
+    drawCurve(buffer, width, height, stride);
+    drawPoints(buffer, width, height, stride);
+}
+
+void CurvesUI::drawGrid(unsigned char* buffer, int width, int height, int stride) {
     // Draw grid lines
-    for (int i = 0; i <= GRID_DIVISIONS; ++i) {
-        float pos = static_cast<float>(i) / GRID_DIVISIONS;
-        int x = static_cast<int>(pos * world->width);
-        int y = static_cast<int>(pos * world->height);
-        
-        // Draw vertical line
-        for (int row = 0; row < world->height; ++row) {
-            PF_Pixel* pixel = (PF_Pixel*)((char*)world->data + 
-                                        row * world->rowbytes + 
-                                        x * sizeof(PF_Pixel));
-            *pixel = GRID_COLOR;
-        }
+    for (int i = 0; i <= GRID_SIZE; ++i) {
+        float t = static_cast<float>(i) / GRID_SIZE;
+        int x = static_cast<int>(t * width);
+        int y = static_cast<int>(t * height);
         
         // Draw horizontal line
-        PF_Pixel* row = (PF_Pixel*)((char*)world->data + y * world->rowbytes);
-        for (int col = 0; col < world->width; ++col) {
-            row[col] = GRID_COLOR;
+        for (int px = 0; px < width; ++px) {
+            buffer[y * stride + px * 4 + 0] = 64;  // R
+            buffer[y * stride + px * 4 + 1] = 64;  // G
+            buffer[y * stride + px * 4 + 2] = 64;  // B
+            buffer[y * stride + px * 4 + 3] = 255; // A
+        }
+        
+        // Draw vertical line
+        for (int py = 0; py < height; ++py) {
+            buffer[py * stride + x * 4 + 0] = 64;
+            buffer[py * stride + x * 4 + 1] = 64;
+            buffer[py * stride + x * 4 + 2] = 64;
+            buffer[py * stride + x * 4 + 3] = 255;
         }
     }
 }
 
-void CurvesUI::drawCurveLine(PF_EffectWorld* world, const CurveData& curveData) {
-    // Draw curve using small line segments
-    float prevX = 0.0f;
-    float prevY = curveData.evaluate(0.0f);
+void CurvesUI::drawCurve(unsigned char* buffer, int width, int height, int stride) {
+    const auto& curve = curves[static_cast<int>(activeChannel)];
     
-    for (int i = 1; i <= 100; ++i) {
-        float t = static_cast<float>(i) / 100.0f;
-        float x = t;
-        float y = curveData.evaluate(t);
+    // Draw curve segments
+    for (int x = 0; x < width; ++x) {
+        float t = static_cast<float>(x) / width;
+        float y = curve->evaluate(t);
+        int py = static_cast<int>((1.0f - y) * height);
         
-        // Convert to screen coordinates
-        int x1 = static_cast<int>(prevX * world->width);
-        int y1 = static_cast<int>((1.0f - prevY) * world->height);
-        int x2 = static_cast<int>(x * world->width);
-        int y2 = static_cast<int>((1.0f - y) * world->height);
+        py = std::clamp(py, 0, height - 1);
         
-        // Draw line segment
-        drawLine(world, x1, y1, x2, y2, CURVE_COLOR);
-        
-        prevX = x;
-        prevY = y;
+        buffer[py * stride + x * 4 + 0] = 255;
+        buffer[py * stride + x * 4 + 1] = 255;
+        buffer[py * stride + x * 4 + 2] = 255;
+        buffer[py * stride + x * 4 + 3] = 255;
     }
 }
 
-void CurvesUI::drawCurvePoints(PF_EffectWorld* world, const CurveData& curveData) {
-    const auto& points = curveData.getPoints();
+void CurvesUI::drawPoints(unsigned char* buffer, int width, int height, int stride) {
+    const auto& curve = curves[static_cast<int>(activeChannel)];
+    const auto& points = curve->getPoints();
     
-    for (const auto& point : points) {
-        int x = static_cast<int>(point.x * world->width);
-        int y = static_cast<int>((1.0f - point.y) * world->height);
+    for (size_t i = 0; i < points.size(); ++i) {
+        UIPoint screen = graphToScreen(points[i].x, points[i].y, width, height);
         
-        // Draw point as a small square
-        for (int dy = -POINT_SIZE/2; dy <= POINT_SIZE/2; ++dy) {
-            for (int dx = -POINT_SIZE/2; dx <= POINT_SIZE/2; ++dx) {
-                int px = x + dx;
-                int py = y + dy;
+        // Draw point
+        for (int dy = -POINT_RADIUS; dy <= POINT_RADIUS; ++dy) {
+            for (int dx = -POINT_RADIUS; dx <= POINT_RADIUS; ++dx) {
+                int px = static_cast<int>(screen.x) + dx;
+                int py = static_cast<int>(screen.y) + dy;
                 
-                if (px >= 0 && px < world->width && py >= 0 && py < world->height) {
-                    PF_Pixel* pixel = (PF_Pixel*)((char*)world->data + 
-                                                py * world->rowbytes + 
-                                                px * sizeof(PF_Pixel));
-                    *pixel = POINT_COLOR;
+                if (px >= 0 && px < width && py >= 0 && py < height) {
+                    buffer[py * stride + px * 4 + 0] = i == selectedPoint ? 255 : 192;
+                    buffer[py * stride + px * 4 + 1] = i == selectedPoint ? 255 : 192;
+                    buffer[py * stride + px * 4 + 2] = i == selectedPoint ? 255 : 192;
+                    buffer[py * stride + px * 4 + 3] = 255;
                 }
             }
         }
     }
 }
 
-PF_Err CurvesUI::handleEvent(PF_InData* in_data, PF_OutData* out_data,
-                            PF_ParamDef* params[], PF_LayerDef* output,
-                            PF_EventExtra* event_extra) {
-    PF_Err err = PF_Err_NONE;
-    
-    switch (event_extra->e_type) {
-        case PF_Event_MOUSE_DOWN:
-            // Handle mouse down event
-            break;
-            
-        case PF_Event_MOUSE_UP:
-            // Handle mouse up event
-            break;
-            
-        case PF_Event_MOUSE_DRAG:
-            // Handle mouse drag event
-            break;
-            
-        default:
-            break;
-    }
-    
-    return err;
-}
+// ...implement remaining methods...

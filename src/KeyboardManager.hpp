@@ -1,28 +1,32 @@
 #pragma once
 #include <map>
 #include <functional>
-#include "AE_Effect.h"
+
+enum class KeyModifiers {
+    None = 0,
+    Shift = 1,
+    Control = 2,
+    Alt = 4
+};
 
 struct KeyCommand {
-    uint8_t key;
-    bool ctrl;
-    bool shift;
-    bool alt;
-
+    int keyCode;
+    KeyModifiers modifiers;
+    
     bool operator<(const KeyCommand& other) const {
-        if (key != other.key) return key < other.key;
-        if (ctrl != other.ctrl) return ctrl < other.ctrl;
-        if (shift != other.shift) return shift < other.shift;
-        return alt < other.alt;
+        if (keyCode != other.keyCode) return keyCode < other.keyCode;
+        return static_cast<int>(modifiers) < static_cast<int>(other.modifiers);
     }
 };
 
 class KeyboardManager {
 public:
-    KeyboardManager();
-    void registerCommand(uint8_t key, bool ctrl, bool shift, bool alt, std::function<void()> callback);
-    bool handleKeyEvent(const PF_EventExtra* event);
+    using CommandCallback = std::function<void()>;
+    
+    void registerCommand(int keyCode, KeyModifiers modifiers, CommandCallback callback);
+    bool handleKeyPress(int keyCode, KeyModifiers modifiers);
+    void clearCommands();
 
 private:
-    std::map<KeyCommand, std::function<void()>> commands;
+    std::map<KeyCommand, CommandCallback> commands;
 };

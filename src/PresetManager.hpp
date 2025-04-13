@@ -6,11 +6,6 @@
 
 class PresetManager {
 public:
-    struct Preset {
-        std::string name;
-        CurveData curveData;
-    };
-
     PresetManager();
     void savePreset(const std::string& name, const CurveData& curve);
     bool loadPreset(const std::string& name, CurveData& outCurve);

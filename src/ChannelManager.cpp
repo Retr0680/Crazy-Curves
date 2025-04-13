@@ -2,7 +2,12 @@
 #include "CurvesUI.hpp"
 #include "DrawingUtils.hpp"
 
-ChannelManager::ChannelManager() : currentChannel(Channel::RGB) {
+ChannelManager::ChannelManager() : activeChannel(Channel::RGB) {
+    // Initialize all curves
+    for (size_t i = 0; i < static_cast<size_t>(Channel::COUNT); ++i) {
+        curves[i] = std::make_unique<CurveData>();
+    }
+
     // Initialize selector bounds
     for (int i = 0; i < 4; i++) {
         selectorBounds[i] = {
@@ -15,11 +20,39 @@ ChannelManager::ChannelManager() : currentChannel(Channel::RGB) {
 }
 
 void ChannelManager::setCurrentChannel(Channel channel) {
-    currentChannel = channel;
+    activeChannel = channel;
 }
 
 Channel ChannelManager::getCurrentChannel() const {
-    return currentChannel;
+    return activeChannel;
+}
+
+CurveData* ChannelManager::getCurve(Channel channel) {
+    size_t index = static_cast<size_t>(channel);
+    if (index < curves.size()) {
+        return curves[index].get();
+    }
+    return nullptr;
+}
+
+const CurveData* ChannelManager::getCurve(Channel channel) const {
+    size_t index = static_cast<size_t>(channel);
+    if (index < curves.size()) {
+        return curves[index].get();
+    }
+    return nullptr;
+}
+
+void ChannelManager::resetChannel(Channel channel) {
+    if (auto curve = getCurve(channel)) {
+        curve->reset();
+    }
+}
+
+void ChannelManager::resetAllChannels() {
+    for (size_t i = 0; i < static_cast<size_t>(Channel::COUNT); ++i) {
+        resetChannel(static_cast<Channel>(i));
+    }
 }
 
 void ChannelManager::drawChannelSelector(PF_EffectWorld* world, PF_Point origin) {
@@ -33,7 +66,7 @@ void ChannelManager::drawChannelSelector(PF_EffectWorld* world, PF_Point origin)
         bounds.bottom += origin.y;
         
         // Draw selector background
-        bool isSelected = (currentChannel == static_cast<Channel>(i));
+        bool isSelected = (activeChannel == static_cast<Channel>(i));
         PF_Pixel color = isSelected ? PF_Pixel{255, 200, 200, 255} : PF_Pixel{180, 180, 180, 255};
         DrawingUtils::drawRect(world, bounds, color);
         

@@ -1,9 +1,26 @@
 #pragma once
-#include "AE_Effect.h"
+#include <cstdint>
 
-namespace DrawingUtils {
-    void drawRect(PF_EffectWorld* world, const PF_Rect& rect, const PF_Pixel& color);
-    void drawLine(PF_EffectWorld* world, int x1, int y1, int x2, int y2, const PF_Pixel& color);
-    void drawText(PF_EffectWorld* world, const char* text, const PF_Rect& bounds, const PF_Pixel& color);
-    bool pointInRect(const PF_Point& point, const PF_Rect& rect);
-}
+struct Color {
+    uint8_t r, g, b, a;
+    Color(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0, uint8_t a = 255) 
+        : r(r), g(g), b(b), a(a) {}
+};
+
+class DrawingUtils {
+public:
+    static void drawLine(uint8_t* buffer, int width, int height, int stride,
+                        int x1, int y1, int x2, int y2, const Color& color);
+                        
+    static void drawRect(uint8_t* buffer, int width, int height, int stride,
+                        int x, int y, int w, int h, const Color& color, bool filled = false);
+                        
+    static void drawCircle(uint8_t* buffer, int width, int height, int stride,
+                          int x, int y, int radius, const Color& color, bool filled = false);
+                          
+    static void blendPixel(uint8_t* pixel, const Color& color);
+
+private:
+    static void plotLine(uint8_t* buffer, int width, int height, int stride,
+                        int x1, int y1, int x2, int y2, const Color& color);
+};
