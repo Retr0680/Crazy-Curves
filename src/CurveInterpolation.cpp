@@ -6,7 +6,6 @@ namespace CurveInterpolation {
 float CurveInterpolation::interpolate(const std::vector<CurvePoint>& points, float x) {
     if (points.size() < 2) return x;
     
-    // Find surrounding points
     auto it = std::lower_bound(points.begin(), points.end(), x,
         [](const CurvePoint& p, float val) { return p.x < val; });
     
