@@ -3,7 +3,7 @@
 
 namespace CurveInterpolation {
 
-float CurveInterpolation::interpolate(const std::vector<CurvePoint>& points, float x) {
+float interpolate(const std::vector<CurvePoint>& points, float x) {
     if (points.size() < 2) return x;
     
     // Find surrounding points
@@ -25,7 +25,7 @@ float CurveInterpolation::interpolate(const std::vector<CurvePoint>& points, flo
     return CurveInterpolation::cubicInterpolate(p0, p1, p2, p3, t);
 }
 
-float CurveInterpolation::cubicInterpolate(float p0, float p1, float p2, float p3, float t) {
+float cubicInterpolate(float p0, float p1, float p2, float p3, float t) {
     float tension = 0.5f;
     float m1 = CurveInterpolation::getCatmullRomTangent(p0, p1, p2, tension);
     float m2 = CurveInterpolation::getCatmullRomTangent(p1, p2, p3, tension);
@@ -38,7 +38,7 @@ float CurveInterpolation::cubicInterpolate(float p0, float p1, float p2, float p
            (t3 - t2) * m2;
 }
 
-float CurveInterpolation::getCatmullRomTangent(float p0, float p1, float p2, float tension) {
+float getCatmullRomTangent(float p0, float p1, float p2, float tension) {
     return tension * (p2 - p0);
 }
 
