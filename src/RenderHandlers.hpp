@@ -4,26 +4,30 @@
 #include "AEGP_SuiteHandler.h"
 #include "CrazyCurves.h"
 
-PF_Err ProcessPixel8(
-    void* refcon,
-    A_long xL,
-    A_long yL, 
-    PF_Pixel8* inP,
-    PF_Pixel8* outP);
+class RenderHandlers {
+public:
+    static PF_Err PreRender(
+        PF_InData* in_data,
+        PF_OutData* out_data,
+        PF_PreRenderExtra* extra);
 
-PF_Err ProcessPixelFloat(
-    void* refcon,
-    A_long xL,
-    A_long yL,
-    PF_PixelFloat* inP,
-    PF_PixelFloat* outP);
+    static PF_Err SmartRender(
+        PF_InData* in_data,
+        PF_OutData* out_data,
+        PF_SmartRenderExtra* extra);
 
-PF_Err SmartRender(
-    PF_InData* in_data,
-    PF_OutData* out_data,
-    PF_SmartRenderExtra* extra);
+private:
+    static PF_Err ProcessPixel8(
+        void* refcon,
+        A_long xL,
+        A_long yL,
+        PF_Pixel8* inP,
+        PF_Pixel8* outP);
 
-PF_Err SmartPreRender(
-    PF_InData* in_data,
-    PF_OutData* out_data,
-    PF_PreRenderExtra* extra);
+    static PF_Err ProcessPixelFloat(
+        void* refcon,
+        A_long xL,
+        A_long yL,
+        PF_PixelFloat* inP,
+        PF_PixelFloat* outP);
+};
