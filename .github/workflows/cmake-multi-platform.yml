@@ -6,37 +6,30 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  BUILD_TYPE: Release
+
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Clean build directory
-      shell: pwsh
-      run: |
-        if (Test-Path -Path "build") {
-            Remove-Item -Recurse -Force build
-        }
-        New-Item -ItemType Directory -Path build
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
-      shell: pwsh
       run: |
+        mkdir build
         cd build
-        cmake -DCMAKE_CXX_STANDARD=20 -S .. -B .
+        cmake -B . -S .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      shell: pwsh
       run: |
         cd build
-        cmake --build . --config Release
+        cmake --build . --config ${{env.BUILD_TYPE}}
 
-    - name: Upload artifact
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: CrazyCurves-core
-        path: build/Release/*.dll
+        name: CrazyCurves-windows
+        path: build/${{env.BUILD_TYPE}}/*.dll
         retention-days: 90
