@@ -14,15 +14,19 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install Adobe After Effects SDK
+    - name: Setup extern directory
       run: |
-        mkdir extern
+        if (!(Test-Path -Path "extern")) {
+            mkdir extern
+        }
         cd extern
         # SDK setup will be manual for now due to Adobe licensing
 
     - name: Configure CMake
       run: |
-        mkdir build
+        if (!(Test-Path -Path "build")) {
+            mkdir build
+        }
         cd build
         cmake ..
 
