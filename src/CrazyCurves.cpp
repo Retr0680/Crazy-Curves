@@ -1,4 +1,4 @@
-#include "CrazyCurves.hpp"
+#include "CrazyCurves.h"
 #include "CurvesUI.hpp"
 #include "CurveCache.hpp"
 #include "CurvesData.h"
@@ -120,9 +120,9 @@ ProcessPixels(
     
     // Apply curve adjustments
     outP->alpha = inP->alpha;
-    outP->red   = seqData->cache->getCachedValue(inP->red / 255.0f) * 255;
-    outP->green = seqData->cache->getCachedValue(inP->green / 255.0f) * 255;
-    outP->blue  = seqData->cache->getCachedValue(inP->blue / 255.0f) * 255;
+    outP->red   = ProcessChannel(inP->red, seqData->r_curve);
+    outP->green = ProcessChannel(inP->green, seqData->g_curve);
+    outP->blue  = ProcessChannel(inP->blue, seqData->b_curve);
     
     return PF_Err_NONE;
 }
