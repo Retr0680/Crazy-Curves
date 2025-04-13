@@ -1,21 +1,11 @@
 #ifndef MATH_H
 #define MATH_H
 
-// Utility functions for mathematical operations
+#include <AE_Effect.h>
 
-// Function to clamp a value between a minimum and maximum
-inline float clamp(float value, float min, float max) {
-    return (value < min) ? min : (value > max) ? max : value;
-}
-
-// Function to interpolate between two values
-inline float lerp(float a, float b, float t) {
-    return a + t * (b - a);
-}
-
-// Function to calculate the power of a number
-inline float pow(float base, float exponent) {
-    return std::pow(base, exponent);
+namespace MathUtils {
+    PF_FpLong lerp(PF_FpLong a, PF_FpLong b, PF_FpLong t);
+    PF_FpLong clamp(PF_FpLong value, PF_FpLong min, PF_FpLong max);
 }
 
 #endif // MATH_H
