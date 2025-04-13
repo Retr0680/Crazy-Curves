@@ -8,6 +8,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Define source files
 set(SOURCES
     src/CrazyCurves.cpp
+    src/ChannelManager.cpp
+    src/CurveCache.cpp
+    src/CurveHistory.cpp
+    src/CurveInterpolation.cpp
+    src/CurvePresets.cpp
+    src/CurvesData.cpp
+    src/CurvesUI.cpp
+    src/PresetManagerUI.cpp
+    src/PreviewWindow.cpp
+    src/DrawingUtils.cpp
 )
 
 # Define header files
