@@ -1,15 +1,10 @@
 #pragma once
+#include "AE_Effect.h"
+#include "AE_EffectCB.h"
+#include "AEGP_SuiteHandler.h"
+#include <chrono>
 #include <string>
 #include <map>
-#include <chrono>
-#include <vector>
-
-struct BenchmarkResult {
-    double averageTime;
-    double minTime;
-    double maxTime;
-    size_t sampleCount;
-};
 
 class BenchmarkManager {
 public:
@@ -18,18 +13,28 @@ public:
         return instance;
     }
 
-    void startMeasurement(const std::string& name);
-    void endMeasurement(const std::string& name);
-    BenchmarkResult getResults(const std::string& name) const;
-    void clearResults(const std::string& name);
-    void clearAllResults();
+    void startBenchmark(const std::string& name);
+    void endBenchmark(const std::string& name);
+    double getBenchmarkResult(const std::string& name) const;
+    void clearBenchmarks();
+    
+    // Specific AE benchmarks
+    PF_Err benchmarkRenderOperation(
+        PF_InData* in_data,
+        PF_OutData* out_data,
+        const std::string& operationName);
+
+    PF_Err benchmarkCurveInterpolation(
+        const CurveData* curve,
+        const std::string& benchmarkName);
 
 private:
     BenchmarkManager() = default;
-    struct Measurement {
-        std::chrono::steady_clock::time_point startTime;
-        std::vector<double> samples;
+    struct BenchmarkData {
+        std::chrono::high_resolution_clock::time_point startTime;
+        double duration{0.0};
+        bool isRunning{false};
     };
     
-    std::map<std::string, Measurement> measurements;
+    std::map<std::string, BenchmarkData> benchmarks;
 };
