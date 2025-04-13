@@ -1,0 +1,38 @@
+name: CMake Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Adobe After Effects SDK
+      run: |
+        mkdir extern
+        cd extern
+        # Note: You'll need to manually add the AE SDK files to the repository
+        # or provide a download mechanism that complies with Adobe's licensing
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CrazyCurves-plugin
+        path: build/Release/CrazyCurves.aex
