@@ -10,6 +10,13 @@
 #include "String_Utils.h"
 #include "Param_Utils.h"
 
+// Version info
+#define MAJOR_VERSION 1
+#define MINOR_VERSION 0
+#define BUG_VERSION  0
+#define STAGE_VERSION PF_Stage_DEVELOP
+#define BUILD_VERSION 1
+
 // Effect parameters
 enum {
     PARAM_INPUT = 0,
@@ -22,7 +29,7 @@ enum {
     PARAM_COUNT
 };
 
-// Custom data structures
+// Curve data structure
 typedef struct {
     PF_FpLong x;
     PF_FpLong y;
@@ -32,16 +39,19 @@ typedef struct {
     A_long curve_id;
     CurvePoint points[256];
     A_long num_points;
+    PF_Boolean dirty;
 } CurveData;
 
+// Plugin sequence data
 typedef struct {
     CurveData rgb_curve;
     CurveData r_curve;
     CurveData g_curve;
     CurveData b_curve;
-    PF_Boolean curves_visible;
     PF_EffectWorld *input_worldP;
     PF_Rect preview_rect;
+    PF_Boolean needs_update;
+    void *cache;  // For curve lookup optimization
 } SequenceData;
 
 #ifdef AE_OS_WIN
