@@ -1,4 +1,4 @@
-#include "CrazyCurves.h"
+#include "CrazyCurves.hpp"
 #include "CurvesUI.hpp"
 #include "CurveCache.hpp"
 #include "CurvesData.h"
@@ -62,29 +62,32 @@ HandleDisposeSequenceData(
 
 static PF_Err 
 About(
-    PF_InData* in_data,
-    PF_OutData* out_data,
-    PF_ParamDef* params[],
-    PF_LayerDef* output)
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output)
 {
     AEGP_SuiteHandler suites(in_data->pica_basicP);
-    suites.ANSICallbacksSuite1()->sprintf(out_data->return_msg,
-        "Crazy Curves v1.0\r"
-        "Color curve adjustment plugin\r"
-        "Copyright 2025");
+    suites.ANSICallbacksSuite1()->sprintf(
+        out_data->return_msg,
+        "%s v%d.%d\r%s",
+        "Crazy Curves",
+        MAJOR_VERSION,
+        MINOR_VERSION,
+        "Color correction curves plugin\r\rCopyright 2024");
     return PF_Err_NONE;
 }
 
 static PF_Err 
 GlobalSetup(
-    PF_InData* in_data,
-    PF_OutData* out_data,
-    PF_ParamDef* params[],
-    PF_LayerDef* output)
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output)
 {
-    out_data->my_version = PF_VERSION(1, 0, 0, 0, 0);
-    out_data->out_flags = PF_OutFlag_CUSTOM_UI | PF_OutFlag_DEEP_COLOR_AWARE;
-    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_FLOAT_COLOR_AWARE;
+    out_data->my_version = PF_VERSION(MAJOR_VERSION, MINOR_VERSION, BUG_VERSION, STAGE_VERSION, BUILD_VERSION);
+    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE;
+    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER;
     return PF_Err_NONE;
 }
 
@@ -319,15 +322,15 @@ SmartRender(
 // Update EffectMain to handle UI events
 PF_Err
 EffectMain(
-    PF_Cmd			cmd,
-    PF_InData		*in_data,
-    PF_OutData		*out_data,
-    PF_ParamDef		*params[],
-    PF_LayerDef		*output,
-    void			*extra)
+    PF_Cmd cmd,
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output,
+    void *extra)
 {
     PF_Err err = PF_Err_NONE;
-
+    
     try {
         switch (cmd) {
             case PF_Cmd_ABOUT:
@@ -364,7 +367,7 @@ EffectMain(
     catch(PF_Err &thrown_err) {
         err = thrown_err;
     }
-
+    
     return err;
 }
 
