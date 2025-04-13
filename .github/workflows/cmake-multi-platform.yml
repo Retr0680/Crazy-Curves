@@ -14,23 +14,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Clean and Configure CMake
+    - name: Clean build directory
+      shell: pwsh
       run: |
         if (Test-Path -Path "build") {
             Remove-Item -Recurse -Force build
         }
-        mkdir build
-        cd build
-        # Build core components only without AE SDK
-        cmake -S .. -B .
+        New-Item -ItemType Directory -Path build
 
     - name: Configure CMake
+      shell: pwsh
       run: |
-        mkdir build
         cd build
         cmake -DCMAKE_CXX_STANDARD=20 -S .. -B .
 
     - name: Build
+      shell: pwsh
       run: |
         cd build
         cmake --build . --config Release
