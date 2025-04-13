@@ -3,9 +3,10 @@
 
 namespace CurveInterpolation {
 
-float interpolate(const std::vector<CurvePoint>& points, float x) {
+float CurveInterpolation::interpolate(const std::vector<CurvePoint>& points, float x) {
     if (points.size() < 2) return x;
     
+    // Find surrounding points
     auto it = std::lower_bound(points.begin(), points.end(), x,
         [](const CurvePoint& p, float val) { return p.x < val; });
     
@@ -20,13 +21,13 @@ float interpolate(const std::vector<CurvePoint>& points, float x) {
     float p2 = points[index].y;
     float p3 = index < points.size()-1 ? points[index+1].y : points[index].y;
     
-    return cubicInterpolate(p0, p1, p2, p3, t);
+    return CurveInterpolation::cubicInterpolate(p0, p1, p2, p3, t);
 }
 
-float cubicInterpolate(float p0, float p1, float p2, float p3, float t) {
+float CurveInterpolation::cubicInterpolate(float p0, float p1, float p2, float p3, float t) {
     float tension = 0.5f;
-    float m1 = getCatmullRomTangent(p0, p1, p2, tension);
-    float m2 = getCatmullRomTangent(p1, p2, p3, tension);
+    float m1 = CurveInterpolation::getCatmullRomTangent(p0, p1, p2, tension);
+    float m2 = CurveInterpolation::getCatmullRomTangent(p1, p2, p3, tension);
     
     float t2 = t * t;
     float t3 = t2 * t;
@@ -36,7 +37,7 @@ float cubicInterpolate(float p0, float p1, float p2, float p3, float t) {
            (t3 - t2) * m2;
 }
 
-float getCatmullRomTangent(float p0, float p1, float p2, float tension) {
+float CurveInterpolation::getCatmullRomTangent(float p0, float p1, float p2, float tension) {
     return tension * (p2 - p0);
 }
 
