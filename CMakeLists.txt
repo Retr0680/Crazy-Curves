@@ -1,72 +1,59 @@
-crazy-curves
-├── src
-│   ├── main.cpp
-│   ├── plugin.h
-│   ├── plugin.cpp
-│   ├── effects
-│   │   ├── curves.h
-│   │   └── curves.cpp
-│   └── utils
-│       ├── math.h
-│       └── math.cpp
-├── include
-│   └── ae_sdk
-├── CMakeLists.txt
-│   cmake_minimum_required(VERSION 3.12)
-│   project(CrazyCurves)
-│   
-│   # Set C++ standard
-│   set(CMAKE_CXX_STANDARD 17)
-│   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-│   
-│   # After Effects SDK path - update this to your SDK location
-│   set(AE_SDK_PATH "${CMAKE_SOURCE_DIR}/include/ae_sdk")
-│   
-│   # Include directories
-│   include_directories(
-│       ${CMAKE_SOURCE_DIR}/src
-│       ${AE_SDK_PATH}/Headers
-│       ${AE_SDK_PATH}/Util
-│   )
-│   
-│   # Source files
-│   set(SOURCES
-│       src/main.cpp
-│       src/plugin.cpp
-│       src/effects/curves.cpp
-│       src/utils/math.cpp
-│   )
-│   
-│   # Header files
-│   set(HEADERS
-│       src/plugin.h
-│       src/effects/curves.h
-│       src/utils/math.h
-│   )
-│   
-│   # Create shared library
-│   add_library(CrazyCurves SHARED
-│       ${SOURCES}
-│       ${HEADERS}
-│   )
-│   
-│   # Set output directory and naming conventions
-│   set_target_properties(CrazyCurves PROPERTIES
-│       PREFIX ""
-│       SUFFIX ".aex"
-│       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-│       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-│   )
-│   
-│   # Link After Effects SDK libraries
-│   target_link_libraries(CrazyCurves
-│       ${AE_SDK_PATH}/Lib/Win/AE_SDK_Libs.lib
-│   )
-│   
-│   # Windows-specific settings
-│   if(WIN32)
-│       add_definitions(-DWIN32 -D_WINDOWS)
-│       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
-│   endif()
-├── LICENSE
-└── README.md
+cmake_minimum_required(VERSION 3.12)
+project(CrazyCurves)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Define source files
+set(SOURCES
+    src/CrazyCurves.cpp
+)
+
+# Define header files
+set(HEADERS
+    src/CrazyCurves.h
+)
+
+# Adobe After Effects SDK path - Update this to your SDK path
+set(AE_SDK_PATH "${CMAKE_SOURCE_DIR}/extern/AfterEffectsSDK" CACHE PATH "Path to After Effects SDK")
+
+# Include directories
+include_directories(
+    ${AE_SDK_PATH}/Headers
+    ${AE_SDK_PATH}/Headers/SP
+    ${AE_SDK_PATH}/Util
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+# Platform-specific settings
+if(WIN32)
+    add_definitions(-D_WINDOWS)
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
+    set(PLATFORM_LIBS
+        kernel32
+        user32
+        gdi32
+        shell32
+    )
+else()
+    set(PLATFORM_LIBS "")
+endif()
+
+# Create shared library
+add_library(CrazyCurves SHARED ${SOURCES} ${HEADERS})
+
+# Link libraries
+target_link_libraries(CrazyCurves PRIVATE ${PLATFORM_LIBS})
+
+# Set output directory
+set_target_properties(CrazyCurves PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Installation
+install(TARGETS CrazyCurves
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+)
