@@ -1,26 +1,30 @@
 #pragma once
-#include <vector>
-#include "CurveData.hpp"
+#include "AE_Effect.h"
+#include "AE_EffectCB.h"
 
-struct BezierPoint {
-    float x, y;           // Anchor point
-    float cx1, cy1;       // Control point 1 (before anchor)
-    float cx2, cy2;       // Control point 2 (after anchor)
-    bool selected;
-    bool controlPoint1Selected;
-    bool controlPoint2Selected;
-};
+typedef struct {
+    PF_FpLong x, y;
+    PF_FpLong cp1x, cp1y;  // First control point
+    PF_FpLong cp2x, cp2y;  // Second control point
+} BezierPoint;
+
+typedef struct {
+    A_long curve_id;
+    BezierPoint points[256];
+    A_long num_points;
+    PF_Boolean dirty;
+} BezierCurveData;
 
 class BezierCurve {
 public:
-    BezierCurve();
-    void addPoint(float x, float y);
-    void updatePoint(size_t index, float x, float y);
-    void updateControlPoint(size_t index, bool isFirstControl, float x, float y);
-    float evaluate(float t) const;
-    const std::vector<BezierPoint>& getPoints() const { return points; }
+    static PF_Err Initialize(BezierCurveData* curve);
+    static PF_Err AddPoint(BezierCurveData* curve, PF_FpLong x, PF_FpLong y);
+    static PF_Err SetControlPoints(BezierCurveData* curve, A_long index, 
+                                 PF_FpLong cp1x, PF_FpLong cp1y,
+                                 PF_FpLong cp2x, PF_FpLong cp2y);
+    static PF_FpLong Evaluate(const BezierCurveData* curve, PF_FpLong t);
+    static PF_Err Reset(BezierCurveData* curve);
 
 private:
-    std::vector<BezierPoint> points;
-    float evaluateSegment(const BezierPoint& p1, const BezierPoint& p2, float t) const;
+    static PF_FpLong BezierInterpolate(const BezierPoint& p1, const BezierPoint& p2, PF_FpLong t);
 };
