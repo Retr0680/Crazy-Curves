@@ -46,12 +46,26 @@ if(WIN32)
         gdi32
         shell32
     )
-else()
-    set(PLATFORM_LIBS "")
 endif()
+
+# Add AE SDK required definitions
+add_definitions(
+    -DWIN32
+    -D_WINDOWS
+    -D_USRDLL
+    -D_CRT_SECURE_NO_WARNINGS
+    -DISOLATION_AWARE_ENABLED
+)
 
 # Create shared library
 add_library(CrazyCurves SHARED ${SOURCES} ${HEADERS})
+
+# Add AE plugin extension
+if(WIN32)
+    set_target_properties(CrazyCurves PROPERTIES
+        SUFFIX ".aex"
+    )
+endif()
 
 # Link libraries
 target_link_libraries(CrazyCurves PRIVATE ${PLATFORM_LIBS})

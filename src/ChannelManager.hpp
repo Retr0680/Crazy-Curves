@@ -1,5 +1,5 @@
 #pragma once
-#include "CurvesUI.hpp"
+#include "AE_Effect.h"  // Changed from CurvesUI.hpp
 
 enum class Channel {
     RGB,

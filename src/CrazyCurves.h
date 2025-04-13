@@ -3,6 +3,19 @@
 #include "AEConfig.h"
 #include "entry.h"
 
+enum {
+    PARAM_INPUT = 0,
+    PARAM_OPACITY,
+    PARAM_COUNT
+};
+
+enum {
+    CURVE_RGB = 0,
+    CURVE_RED,
+    CURVE_GREEN,
+    CURVE_BLUE
+};
+
 #ifdef AE_OS_WIN
     #include <Windows.h>
 #endif

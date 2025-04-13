@@ -1,35 +1,28 @@
 #pragma once
 
-#include <map>
-#include <functional>
-#include "ChannelManager.h"
-#include "PreviewWindow.h"
-#include "CurveHistory.h"
-#include "PF_EventExtra.h"
+#include "AE_Effect.h"
+#include "ChannelManager.hpp"
+#include "PreviewWindow.hpp"
+#include "CurveHistory.hpp"
 
 class CurvesUI {
 public:
     CurvesUI();
-    ~CurvesUI();
-
-    void render();
-    void update();
+    
+    PF_Err drawCurve(PF_InData* in_data, PF_OutData* out_data, 
+                     PF_ParamDef* params[], const CurveData& curveData, 
+                     PF_EffectWorld* world);
+                     
+    PF_Err handleEvent(PF_InData* in_data, PF_OutData* out_data, 
+                      PF_ParamDef* params[], PF_LayerDef* output, 
+                      PF_EventExtra* event);
 
 private:
     ChannelManager channelManager;
     PreviewWindow preview;
     CurveHistory history;
     
-    struct KeyboardShortcut {
-        uint8_t key;
-        bool ctrl;
-        bool shift;
-        bool alt;
-        
-        bool operator<(const KeyboardShortcut& other) const;
-    };
-    
-    std::map<KeyboardShortcut, std::function<void()>> shortcuts;
-    void initializeShortcuts();
-    void handleKeyboard(const PF_EventExtra* event);
+    void drawGrid(PF_EffectWorld* world);
+    void drawCurvePoints(PF_EffectWorld* world, const CurveData& curveData);
+    void drawCurveLine(PF_EffectWorld* world, const CurveData& curveData);
 };
