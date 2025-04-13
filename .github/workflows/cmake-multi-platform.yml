@@ -24,6 +24,12 @@ jobs:
         # Build core components only without AE SDK
         cmake -S .. -B .
 
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_CXX_STANDARD=20 -S .. -B .
+
     - name: Build
       run: |
         cd build

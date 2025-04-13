@@ -2,11 +2,11 @@
 #include "DrawingUtils.hpp"
 
 PreviewWindow::PreviewWindow() : isDirty(true) {
-    bounds = {
-        .left = 0,
-        .top = 0,
-        .right = PREVIEW_WIDTH,
-        .bottom = PREVIEW_HEIGHT
+    bounds = PF_Rect{
+        0,      // left
+        0,      // top
+        PREVIEW_WIDTH,    // right
+        PREVIEW_HEIGHT    // bottom
     };
 }
 
