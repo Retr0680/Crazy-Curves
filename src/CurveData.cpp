@@ -1,4 +1,4 @@
-#include "CurveData.hpp"
+#include "CurvesData.hpp"
 #include "CurveInterpolation.hpp"
 
 CurveData::CurveData() {

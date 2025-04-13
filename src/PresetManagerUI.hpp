@@ -4,8 +4,8 @@
 #include "AE_Effect.h"
 #include "AE_EffectUI.h"
 #include "AE_EffectCB.h"
-#include "CurvesData.h"
-#include "CurvePresets.h"
+#include "CurvesData.hpp"
+#include "CurvePresets.hpp"
 
 class PresetManagerUI {
 public:

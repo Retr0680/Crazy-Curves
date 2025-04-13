@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include "CurveInterpolation.hpp"
 
 struct CurvePoint {
     float x;
@@ -24,9 +25,10 @@ public:
     void reset();
     
     const std::vector<CurvePoint>& getPoints() const { return points; }
+    void setInterpolationMethod(CurveInterpolation::Method method);
 
 private:
     std::vector<CurvePoint> points;
-    float interpolate(float x, const CurvePoint& p1, const CurvePoint& p2) const;
+    CurveInterpolation::Method interpolationMethod;
     void sortPoints();
 };
