@@ -2,12 +2,19 @@
 
 #include "AEConfig.h"
 #include "entry.h"
+#include "CurvesUI.hpp"
+#include "CurveCache.hpp"
 
 enum {
     PARAM_INPUT = 0,
     PARAM_OPACITY,
     PARAM_COUNT
 };
+
+typedef struct {
+    CurvesUI* ui;
+    CurveCache* cache;
+} SequenceData;
 
 enum {
     CURVE_RGB = 0,
