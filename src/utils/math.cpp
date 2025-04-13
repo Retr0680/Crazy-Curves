@@ -1,6 +1,18 @@
 #include "math.h"
 #include <cmath>
 
+namespace MathUtils {
+    PF_FpLong lerp(PF_FpLong a, PF_FpLong b, PF_FpLong t) {
+        return a + t * (b - a);
+    }
+    
+    PF_FpLong clamp(PF_FpLong value, PF_FpLong min, PF_FpLong max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
+    }
+}
+
 // Function to interpolate between two values
 float lerp(float a, float b, float t) {
     return a + t * (b - a);
