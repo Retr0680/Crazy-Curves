@@ -5,8 +5,9 @@
 #include "CurvesUI.h"
 #include "AE_Effect.h"
 #include "AE_EffectCB.h"
-#include "AE_Macros.h"
 #include "AEGP_SuiteHandler.h"
+#include "String_Utils.h"
+#include "Param_Utils.h"
 
 // Add these as global variables
 static CurvesData g_rgbCurve;
@@ -85,39 +86,49 @@ GlobalSetup(
     PF_ParamDef *params[],
     PF_LayerDef *output)
 {
-    PF_Err err = PF_Err_NONE;
-    
     out_data->my_version = PF_VERSION(MAJOR_VERSION, MINOR_VERSION, BUG_VERSION, STAGE_VERSION, BUILD_VERSION);
     out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE;
-    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_FLOAT_COLOR_AWARE;
-    
-    return err;
+    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER | 
+                          PF_OutFlag2_FLOAT_COLOR_AWARE |
+                          PF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG;
+    return PF_Err_NONE;
 }
 
 static PF_Err
 ParamsSetup(
-    PF_InData		*in_data,
-    PF_OutData		*out_data,
-    PF_ParamDef		*params[],
-    PF_LayerDef		*output)
+    PF_InData *in_data,
+    PF_OutData *out_data,
+    PF_ParamDef *params[],
+    PF_LayerDef *output)
 {
     PF_Err err = PF_Err_NONE;
     PF_ParamDef def;
 
+    // Add curves group
     AEFX_CLR_STRUCT(def);
-    def.param_type = PF_Param_GROUP_START;
     PF_STRCPY(def.name, "Curves");
+    def.param_type = PF_Param_GROUP_START;
     def.flags = PF_ParamFlag_SUPERVISE;
-    err = PF_ADD_PARAM(in_data, -1, &def);
+    ERR(PF_ADD_PARAM(in_data, -1, &def));
 
+    // Add RGB curve
     AEFX_CLR_STRUCT(def);
-    PF_STRCPY(def.name, "Master Curve");
+    PF_STRCPY(def.name, "Master");
     def.param_type = PF_Param_CURVE;
     def.u.pd.flags = PF_PUI_TOPIC | PF_PUI_CONTROL;
-    err = PF_ADD_PARAM(in_data, -1, &def);
+    ERR(PF_ADD_PARAM(in_data, -1, &def));
 
-    // Add other curve parameters...
+    // Add individual channel curves
+    const char* channelNames[] = {"Red", "Green", "Blue"};
+    for (int i = 0; i < 3; i++) {
+        AEFX_CLR_STRUCT(def);
+        PF_STRCPY(def.name, channelNames[i]);
+        def.param_type = PF_Param_CURVE;
+        def.u.pd.flags = PF_PUI_CONTROL;
+        ERR(PF_ADD_PARAM(in_data, -1, &def));
+    }
 
+    // Add opacity slider
     AEFX_CLR_STRUCT(def);
     PF_STRCPY(def.name, "Opacity");
     def.param_type = PF_Param_FLOAT_SLIDER;
@@ -126,7 +137,7 @@ ParamsSetup(
     def.u.fs_d.value = 100;
     def.u.fs_d.dephault = 100;
     def.flags = PF_ParamFlag_SUPERVISE;
-    err = PF_ADD_PARAM(in_data, -1, &def);
+    ERR(PF_ADD_PARAM(in_data, -1, &def));
 
     out_data->num_params = PARAM_COUNT;
     return err;

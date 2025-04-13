@@ -17,7 +17,7 @@
 #define STAGE_VERSION PF_Stage_DEVELOP
 #define BUILD_VERSION 1
 
-// Effect parameters
+// Plugin parameters
 enum {
     PARAM_INPUT = 0,
     PARAM_CURVES_GROUP,
@@ -42,16 +42,15 @@ typedef struct {
     PF_Boolean dirty;
 } CurveData;
 
-// Plugin sequence data
+// Sequence data structure
 typedef struct {
     CurveData rgb_curve;
     CurveData r_curve;
     CurveData g_curve;
     CurveData b_curve;
-    PF_EffectWorld *input_worldP;
-    PF_Rect preview_rect;
+    A_long selected_point;
     PF_Boolean needs_update;
-    void *cache;  // For curve lookup optimization
+    void* cache;
 } SequenceData;
 
 #ifdef AE_OS_WIN
@@ -61,7 +60,7 @@ typedef struct {
 #endif
 
 extern "C" {
-    DllExport PF_Err EffectMain(
+    DllExport PF_Err EntryPointFunc(
         PF_Cmd cmd,
         PF_InData *in_data,
         PF_OutData *out_data,
