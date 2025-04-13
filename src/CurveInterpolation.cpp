@@ -20,13 +20,13 @@ float CurveInterpolation::interpolate(const std::vector<CurvePoint>& points, flo
     float p2 = points[index].y;
     float p3 = index < points.size()-1 ? points[index+1].y : points[index].y;
     
-    return CurveInterpolation::cubicInterpolate(p0, p1, p2, p3, t);
+    return cubicInterpolate(p0, p1, p2, p3, t);
 }
 
 float CurveInterpolation::cubicInterpolate(float p0, float p1, float p2, float p3, float t) {
     float tension = 0.5f;
-    float m1 = CurveInterpolation::getCatmullRomTangent(p0, p1, p2, tension);
-    float m2 = CurveInterpolation::getCatmullRomTangent(p1, p2, p3, tension);
+    float m1 = getCatmullRomTangent(p0, p1, p2, tension);
+    float m2 = getCatmullRomTangent(p1, p2, p3, tension);
     
     float t2 = t * t;
     float t3 = t2 * t;
