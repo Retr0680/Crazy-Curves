@@ -233,40 +233,78 @@ HandleEvent(
     PF_EventExtra* event)
 {
     PF_Err err = PF_Err_NONE;
+    AEGP_SuiteHandler suites(in_data->pica_basicP);
     SequenceData* seqData = static_cast<SequenceData*>(in_data->sequence_data);
-    
+
+    if (!seqData) return PF_Err_INTERNAL_STRUCT_DAMAGED;
+
     switch (event->e_type) {
-        case PF_Event_DRAW:
-            if (seqData && seqData->ui) {
-                err = seqData->ui->drawCurve(in_data, out_data, params, event->u.draw.world);
+        case PF_Event_DO_CLICK:
+            {
+                PF_Point local_point;
+                ERR(PF_COPY(&event->u.do_click.screen_point, &local_point));
+                
+                // Convert screen coordinates to curve space
+                PF_FpLong x = (local_point.h - 10) / 256.0;
+                PF_FpLong y = 1.0 - ((local_point.v - 10) / 256.0);
+                
+                if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+                    // Add point to active curve
+                    CurvePoint newPoint = {x, y};
+                    if (seqData->rgb_curve.num_points < 256) {
+                        seqData->rgb_curve.points[seqData->rgb_curve.num_points++] = newPoint;
+                        seqData->rgb_curve.dirty = true;
+                        out_data->refresh_flag = true;
+                    }
+                }
             }
             break;
-            
-        case PF_Event_DO_CLICK:
-            if (seqData && seqData->ui) {
-                PF_Point clickPt = {event->u.do_click.screen_point.h, 
-                                  event->u.do_click.screen_point.v};
-                err = seqData->ui->handleClick(clickPt);
-                if (!err) {
-                    // Update cache after UI interaction
-                    seqData->cache->invalidate();
+
+        case PF_Event_DRAG:
+            {
+                PF_Point local_point;
+                ERR(PF_COPY(&event->u.do_click.screen_point, &local_point));
+                
+                // Update selected point position
+                if (seqData->selected_point >= 0 && 
+                    seqData->selected_point < seqData->rgb_curve.num_points) {
+                    
+                    PF_FpLong x = (local_point.h - 10) / 256.0;
+                    PF_FpLong y = 1.0 - ((local_point.v - 10) / 256.0);
+                    
+                    x = PF_MAX(0, PF_MIN(1, x));
+                    y = PF_MAX(0, PF_MIN(1, y));
+                    
+                    seqData->rgb_curve.points[seqData->selected_point].x = x;
+                    seqData->rgb_curve.points[seqData->selected_point].y = y;
+                    seqData->rgb_curve.dirty = true;
                     out_data->refresh_flag = true;
                 }
             }
             break;
-            
+
         case PF_Event_KEYDOWN:
-            if (seqData && seqData->ui) {
-                err = seqData->ui->handleKeyboard(event);
-                if (!err && (event->u.key.key_code == PF_KEY_DELETE || 
-                           event->u.key.key_code == PF_KEY_BACK)) {
-                    seqData->cache->invalidate();
-                    out_data->refresh_flag = true;
+            {
+                // Handle keyboard events (e.g., delete points)
+                if (event->u.key.key_code == PF_KeyCode_DELETE) {
+                    if (seqData->selected_point >= 0 && 
+                        seqData->selected_point < seqData->rgb_curve.num_points) {
+                        
+                        // Remove selected point
+                        for (A_long i = seqData->selected_point; 
+                             i < seqData->rgb_curve.num_points - 1; i++) {
+                            seqData->rgb_curve.points[i] = seqData->rgb_curve.points[i + 1];
+                        }
+                        seqData->rgb_curve.num_points--;
+                        seqData->rgb_curve.dirty = true;
+                        seqData->selected_point = -1;
+                        out_data->refresh_flag = true;
+                    }
                 }
             }
             break;
     }
-    
+
     return err;
 }
 
@@ -455,27 +493,47 @@ EntryPointFunc(
             case PF_Cmd_ABOUT:
                 err = About(in_data, out_data, params, output);
                 break;
+
             case PF_Cmd_GLOBAL_SETUP:
                 err = GlobalSetup(in_data, out_data, params, output);
                 break;
+
             case PF_Cmd_PARAMS_SETUP:
                 err = ParamsSetup(in_data, out_data, params, output);
                 break;
+
             case PF_Cmd_SEQUENCE_SETUP:
                 err = SequenceSetup(in_data, out_data, params, output);
                 break;
+
             case PF_Cmd_SEQUENCE_SETDOWN:
                 err = SequenceSetdown(in_data, out_data, params, output);
                 break;
+
+            case PF_Cmd_SEQUENCE_RESETUP:
+                err = SequenceResetup(in_data, out_data, params, output);
+                break;
+
             case PF_Cmd_RENDER:
                 err = Render(in_data, out_data, params, output);
                 break;
+
             case PF_Cmd_EVENT:
                 err = HandleEvent(in_data, out_data, params, output, (PF_EventExtra*)extra);
                 break;
+
+            case PF_Cmd_USER_CHANGED_PARAM:
+                err = UserChangedParam(in_data, out_data, params, output, (PF_UserChangedParamExtra*)extra);
+                break;
+
+            case PF_Cmd_UPDATE_PARAMS_UI:
+                err = UpdateParamsUI(in_data, out_data, params, output);
+                break;
+
             case PF_Cmd_SMART_PRE_RENDER:
                 err = SmartPreRender(in_data, out_data, (PF_PreRenderExtra*)extra);
                 break;
+
             case PF_Cmd_SMART_RENDER:
                 err = SmartRender(in_data, out_data, (PF_SmartRenderExtra*)extra);
                 break;
