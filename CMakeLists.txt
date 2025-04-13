@@ -5,14 +5,14 @@ project(CrazyCurves)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define source files
-set(SOURCES
+# Define core source files that don't depend on AE SDK
+set(CORE_SOURCES
     src/CurveData.cpp
     src/CurveInterpolation.cpp
 )
 
 # Create shared library
-add_library(CrazyCurves SHARED ${SOURCES})
+add_library(CrazyCurves SHARED ${CORE_SOURCES})
 
 # Include directories
 target_include_directories(CrazyCurves PRIVATE
