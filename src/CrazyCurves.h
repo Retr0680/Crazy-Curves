@@ -10,27 +10,38 @@
 #include "String_Utils.h"
 #include "Param_Utils.h"
 
-// Plugin parameters
+// Effect parameters
 enum {
     PARAM_INPUT = 0,
-    PARAM_CURVE_DATA,
+    PARAM_CURVES_GROUP,
+    PARAM_RGB_CURVE,
+    PARAM_R_CURVE,
+    PARAM_G_CURVE,
+    PARAM_B_CURVE,
+    PARAM_OPACITY,
     PARAM_COUNT
 };
 
-// Curve data structure
+// Custom data structures
 typedef struct {
-    A_long curve_data_id;
-    PF_FpLong points[256][2];  // x,y pairs
+    PF_FpLong x;
+    PF_FpLong y;
+} CurvePoint;
+
+typedef struct {
+    A_long curve_id;
+    CurvePoint points[256];
     A_long num_points;
 } CurveData;
 
-// Sequence data structure
 typedef struct {
     CurveData rgb_curve;
     CurveData r_curve;
     CurveData g_curve;
     CurveData b_curve;
+    PF_Boolean curves_visible;
     PF_EffectWorld *input_worldP;
+    PF_Rect preview_rect;
 } SequenceData;
 
 #ifdef AE_OS_WIN

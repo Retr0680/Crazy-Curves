@@ -74,7 +74,7 @@ About(
         "Crazy Curves",
         MAJOR_VERSION,
         MINOR_VERSION,
-        "Color correction curves plugin\r\rCopyright 2024");
+        "Color correction curves\r\rCopyright 2024");
     return PF_Err_NONE;
 }
 
@@ -85,10 +85,13 @@ GlobalSetup(
     PF_ParamDef *params[],
     PF_LayerDef *output)
 {
+    PF_Err err = PF_Err_NONE;
+    
     out_data->my_version = PF_VERSION(MAJOR_VERSION, MINOR_VERSION, BUG_VERSION, STAGE_VERSION, BUILD_VERSION);
     out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE;
-    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER;
-    return PF_Err_NONE;
+    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_FLOAT_COLOR_AWARE;
+    
+    return err;
 }
 
 static PF_Err
@@ -102,14 +105,35 @@ ParamsSetup(
     PF_ParamDef def;
 
     AEFX_CLR_STRUCT(def);
-    PF_ADD_FLOAT_SLIDER("Master Opacity", 0, 100, 0, 100, 100, 0, 0, 0, 0, PARAM_OPACITY);
-    
+    def.param_type = PF_Param_GROUP_START;
+    PF_STRCPY(def.name, "Curves");
+    def.flags = PF_ParamFlag_SUPERVISE;
+    err = PF_ADD_PARAM(in_data, -1, &def);
+
+    AEFX_CLR_STRUCT(def);
+    PF_STRCPY(def.name, "Master Curve");
+    def.param_type = PF_Param_CURVE;
+    def.u.pd.flags = PF_PUI_TOPIC | PF_PUI_CONTROL;
+    err = PF_ADD_PARAM(in_data, -1, &def);
+
+    // Add other curve parameters...
+
+    AEFX_CLR_STRUCT(def);
+    PF_STRCPY(def.name, "Opacity");
+    def.param_type = PF_Param_FLOAT_SLIDER;
+    def.u.fs_d.valid_min = 0;
+    def.u.fs_d.valid_max = 100;
+    def.u.fs_d.value = 100;
+    def.u.fs_d.dephault = 100;
+    def.flags = PF_ParamFlag_SUPERVISE;
+    err = PF_ADD_PARAM(in_data, -1, &def);
+
     out_data->num_params = PARAM_COUNT;
     return err;
 }
 
 static PF_Err 
-ProcessPixels(
+ProcessPixels8(
     void* refcon,
     A_long xL, 
     A_long yL,
@@ -120,9 +144,9 @@ ProcessPixels(
     
     // Apply curve adjustments
     outP->alpha = inP->alpha;
-    outP->red   = ProcessChannel(inP->red, seqData->r_curve);
-    outP->green = ProcessChannel(inP->green, seqData->g_curve);
-    outP->blue  = ProcessChannel(inP->blue, seqData->b_curve);
+    outP->red   = ProcessChannel(inP->red, &seqData->r_curve);
+    outP->green = ProcessChannel(inP->green, &seqData->g_curve);
+    outP->blue  = ProcessChannel(inP->blue, &seqData->b_curve);
     
     return PF_Err_NONE;
 }
@@ -191,7 +215,7 @@ Render(
                                                input_worldP,     // src
                                                nullptr,         // area - null for all pixels
                                                (void*)seqData,  // refcon
-                                               ProcessPixels,
+                                               ProcessPixels8,
                                                output_worldP));
         }
     }
@@ -311,7 +335,7 @@ SmartRender(
                                                      input_worldP,
                                                      nullptr,
                                                      (void*)seqData,
-                                                     ProcessPixels,
+                                                     ProcessPixels8,
                                                      output_worldP));
         }
     }
