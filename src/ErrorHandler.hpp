@@ -1,32 +1,40 @@
 #pragma once
+#include "AE_Effect.h"
+#include "AE_EffectCB.h"
+#include "AEGP_SuiteHandler.h"
+#include "CrazyCurves.h"
 #include <string>
-#include <functional>
-#include <map>
-#include "EventManager.hpp"
-
-enum class ErrorSeverity {
-    INFO,
-    WARNING,
-    ERROR,
-    CRITICAL
-};
 
 class ErrorHandler {
 public:
-    using ErrorCallback = std::function<void(const std::string&, ErrorSeverity)>;
-
     static ErrorHandler& getInstance() {
         static ErrorHandler instance;
         return instance;
     }
 
-    void registerCallback(const std::string& id, ErrorCallback callback);
-    void unregisterCallback(const std::string& id);
-    void reportError(const std::string& message, ErrorSeverity severity);
-    void clearErrors();
+    PF_Err HandleError(
+        PF_InData* in_data,
+        PF_OutData* out_data,
+        PF_Err err,
+        const std::string& context);
+
+    PF_Err LogError(
+        PF_InData* in_data,
+        PF_Err err,
+        const std::string& message);
+
+    bool HasError() const { return lastError != PF_Err_NONE; }
+    PF_Err GetLastError() const { return lastError; }
+    const std::string& GetLastErrorContext() const { return lastErrorContext; }
 
 private:
-    ErrorHandler();
-    std::map<std::string, ErrorCallback> callbacks;
-    EventManager& eventManager;
+    ErrorHandler() : lastError(PF_Err_NONE) {}
+    
+    PF_Err lastError;
+    std::string lastErrorContext;
+    
+    void DisplayError(
+        PF_InData* in_data,
+        PF_OutData* out_data,
+        const std::string& message);
 };
