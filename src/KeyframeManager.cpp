@@ -1,5 +1,5 @@
 #include "KeyframeManager.hpp"
-#include <algorithm>
+#include "InterpolationManager.hpp"
 
 PF_Err KeyframeManager::AddKeyframe(
     PF_InData* in_data,
@@ -18,16 +18,20 @@ PF_Err KeyframeManager::AddKeyframe(
     }
 
     // Insert maintaining time order
-    auto it = std::lower_bound(keyframes.begin(), keyframes.end(), keyframe);
+    auto it = std::lower_bound(keyframes.begin(), keyframes.end(), keyframe,
+        [](const Keyframe& a, const Keyframe& b) {
+            return a.time < b.time;
+        });
+
     keyframes.insert(it, keyframe);
 
     return err;
 }
 
-PF_Err KeyframeManager::GetValueAtTime(
+PF_Err KeyframeManager::GetCurvesAtTime(
     PF_InData* in_data,
     PF_FpLong time,
-    CurveData* result)
+    CurveData* curves)
 {
     PF_Err err = PF_Err_NONE;
 
@@ -36,33 +40,39 @@ PF_Err KeyframeManager::GetValueAtTime(
     }
 
     // Find surrounding keyframes
-    auto it = std::lower_bound(keyframes.begin(), keyframes.end(), 
-        Keyframe{time, {}}, 
-        [](const Keyframe& a, const Keyframe& b) { 
-            return a.time < b.time; 
+    auto it = std::lower_bound(keyframes.begin(), keyframes.end(),
+        Keyframe{time, {}},
+        [](const Keyframe& a, const Keyframe& b) {
+            return a.time < b.time;
         });
 
     if (it == keyframes.begin()) {
-        // Before first keyframe - use first keyframe value
-        *result = keyframes.front().curves[0];
-    } else if (it == keyframes.end()) {
-        // After last keyframe - use last keyframe value
-        *result = keyframes.back().curves[0];
-    } else {
-        // Interpolate between surrounding keyframes
+        // Before first keyframe - use first keyframe
+        for (int i = 0; i < 4; i++) {
+            curves[i] = keyframes.front().curves[i];
+        }
+    }
+    else if (it == keyframes.end()) {
+        // After last keyframe - use last keyframe
+        for (int i = 0; i < 4; i++) {
+            curves[i] = keyframes.back().curves[i];
+        }
+    }
+    else {
+        // Interpolate between keyframes
         const Keyframe& k1 = *(it - 1);
         const Keyframe& k2 = *it;
-
         PF_FpLong t = (time - k1.time) / (k2.time - k1.time);
-        ERR(InterpolateCurves(&k1.curves[0], &k2.curves[0], t, result));
+
+        for (int i = 0; i < 4; i++) {
+            ERR(InterpolateCurves(&k1.curves[i], &k2.curves[i], t, &curves[i]));
+        }
     }
 
     return err;
 }
 
-PF_Err KeyframeManager::DeleteKeyframe(
-    PF_InData* in_data,
-    PF_FpLong time)
+PF_Err KeyframeManager::DeleteKeyframe(PF_FpLong time)
 {
     PF_Err err = PF_Err_NONE;
 
@@ -78,24 +88,37 @@ PF_Err KeyframeManager::DeleteKeyframe(
     return err;
 }
 
+PF_Err KeyframeManager::UpdateKeyframe(
+    PF_InData* in_data,
+    const CurveData* curves,
+    PF_FpLong time)
+{
+    PF_Err err = PF_Err_NONE;
+
+    auto it = std::find_if(keyframes.begin(), keyframes.end(),
+        [time](const Keyframe& k) {
+            return std::abs(k.time - time) < 0.001;
+        });
+
+    if (it != keyframes.end()) {
+        // Update existing keyframe
+        for (int i = 0; i < 4; i++) {
+            it->curves[i] = curves[i];
+        }
+    }
+    else {
+        // Add new keyframe if not found
+        ERR(AddKeyframe(in_data, curves, time));
+    }
+
+    return err;
+}
+
 PF_Err KeyframeManager::InterpolateCurves(
     const CurveData* c1,
     const CurveData* c2,
     PF_FpLong t,
     CurveData* result)
 {
-    PF_Err err = PF_Err_NONE;
-
-    // Initialize result curve
-    result->curve_id = c1->curve_id;
-    result->num_points = c1->num_points;
-    result->dirty = true;
-
-    // Interpolate each point
-    for (A_long i = 0; i < c1->num_points; i++) {
-        result->points[i].x = c1->points[i].x + t * (c2->points[i].x - c1->points[i].x);
-        result->points[i].y = c1->points[i].y + t * (c2->points[i].y - c1->points[i].y);
-    }
-
-    return err;
+    return InterpolationManager::getInstance().InterpolateCurves(c1, c2, t, result);
 }
