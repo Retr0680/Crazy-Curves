@@ -1,35 +1,43 @@
 #include "LUTManager.hpp"
+#include <algorithm>
 
 PF_Err LUTManager::InitializeLUTs(const CurveData* curves) {
     PF_Err err = PF_Err_NONE;
 
-    // Build LUTs for each curve
-    ERR(BuildLUT(&curves[0], lutTables[0]));  // Master RGB
-    ERR(BuildLUT(&curves[1], lutTables[1]));  // Red
-    ERR(BuildLUT(&curves[2], lutTables[2]));  // Green
-    ERR(BuildLUT(&curves[3], lutTables[3]));  // Blue
+    // Initialize all LUTs
+    ERR(BuildLUT(&curves[0], rgbLUT));
+    ERR(BuildLUT(&curves[1], redLUT));
+    ERR(BuildLUT(&curves[2], greenLUT));
+    ERR(BuildLUT(&curves[3], blueLUT));
 
-    if (!err) {
-        lutsValid = true;
-    }
+    return err;
+}
+
+PF_Err LUTManager::UpdateLUTs(const CurveData* curves) {
+    PF_Err err = PF_Err_NONE;
+
+    // Update only if curves are marked as dirty
+    if (curves[0].dirty) ERR(BuildLUT(&curves[0], rgbLUT));
+    if (curves[1].dirty) ERR(BuildLUT(&curves[1], redLUT));
+    if (curves[2].dirty) ERR(BuildLUT(&curves[2], greenLUT));
+    if (curves[3].dirty) ERR(BuildLUT(&curves[3], blueLUT));
 
     return err;
 }
 
 PF_Err LUTManager::ProcessPixel8(const PF_Pixel8* inP, PF_Pixel8* outP) const {
-    if (!lutsValid) return PF_Err_INTERNAL_STRUCT_DAMAGED;
+    if (!rgbLUT.isValid || !redLUT.isValid || !greenLUT.isValid || !blueLUT.isValid) 
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
 
     // Apply master RGB curve first
-    PF_FpLong rgb_r, rgb_g, rgb_b;
-    ERR(InterpolateLUT(inP->red / 255.0f, lutTables[0], &rgb_r));
-    ERR(InterpolateLUT(inP->green / 255.0f, lutTables[0], &rgb_g));
-    ERR(InterpolateLUT(inP->blue / 255.0f, lutTables[0], &rgb_b));
+    PF_FpLong rgb_r = EvaluateRGB(inP->red / 255.0f);
+    PF_FpLong rgb_g = EvaluateRGB(inP->green / 255.0f);
+    PF_FpLong rgb_b = EvaluateRGB(inP->blue / 255.0f);
 
     // Then apply individual channel curves
-    PF_FpLong final_r, final_g, final_b;
-    ERR(InterpolateLUT(rgb_r, lutTables[1], &final_r));
-    ERR(InterpolateLUT(rgb_g, lutTables[2], &final_g));
-    ERR(InterpolateLUT(rgb_b, lutTables[3], &final_b));
+    PF_FpLong final_r = EvaluateRed(rgb_r);
+    PF_FpLong final_g = EvaluateGreen(rgb_g);
+    PF_FpLong final_b = EvaluateBlue(rgb_b);
 
     // Convert back to 8-bit
     outP->red = static_cast<A_u_char>(final_r * 255.0f);
@@ -41,61 +49,91 @@ PF_Err LUTManager::ProcessPixel8(const PF_Pixel8* inP, PF_Pixel8* outP) const {
 }
 
 PF_Err LUTManager::ProcessPixelFloat(const PF_PixelFloat* inP, PF_PixelFloat* outP) const {
-    if (!lutsValid) return PF_Err_INTERNAL_STRUCT_DAMAGED;
+    if (!rgbLUT.isValid || !redLUT.isValid || !greenLUT.isValid || !blueLUT.isValid) 
+        return PF_Err_INTERNAL_STRUCT_DAMAGED;
 
     // Apply master RGB curve first
-    PF_FpLong rgb_r, rgb_g, rgb_b;
-    ERR(InterpolateLUT(inP->red, lutTables[0], &rgb_r));
-    ERR(InterpolateLUT(inP->green, lutTables[0], &rgb_g));
-    ERR(InterpolateLUT(inP->blue, lutTables[0], &rgb_b));
+    PF_FpLong rgb_r = EvaluateRGB(inP->red);
+    PF_FpLong rgb_g = EvaluateRGB(inP->green);
+    PF_FpLong rgb_b = EvaluateRGB(inP->blue);
 
     // Then apply individual channel curves
-    ERR(InterpolateLUT(rgb_r, lutTables[1], &outP->red));
-    ERR(InterpolateLUT(rgb_g, lutTables[2], &outP->green));
-    ERR(InterpolateLUT(rgb_b, lutTables[3], &outP->blue));
+    outP->red = EvaluateRed(rgb_r);
+    outP->green = EvaluateGreen(rgb_g);
+    outP->blue = EvaluateBlue(rgb_b);
     outP->alpha = inP->alpha;
 
     return PF_Err_NONE;
 }
 
 void LUTManager::InvalidateLUTs() {
-    lutsValid = false;
+    rgbLUT.isValid = false;
+    redLUT.isValid = false;
+    greenLUT.isValid = false;
+    blueLUT.isValid = false;
 }
 
-PF_Err LUTManager::BuildLUT(const CurveData* curve, PF_FpLong* table) {
-    if (!curve || !table) return PF_Err_BAD_CALLBACK_PARAM;
+PF_FpLong LUTManager::EvaluateRGB(PF_FpLong input) const {
+    return InterpolateLUT(rgbLUT, input);
+}
 
-    // Build lookup table
-    for (A_long i = 0; i < LUT_SIZE; ++i) {
+PF_FpLong LUTManager::EvaluateRed(PF_FpLong input) const {
+    return InterpolateLUT(redLUT, input);
+}
+
+PF_FpLong LUTManager::EvaluateGreen(PF_FpLong input) const {
+    return InterpolateLUT(greenLUT, input);
+}
+
+PF_FpLong LUTManager::EvaluateBlue(PF_FpLong input) const {
+    return InterpolateLUT(blueLUT, input);
+}
+
+PF_Err LUTManager::BuildLUT(
+    const CurveData* curve,
+    LUTData& lut)
+{
+    PF_Err err = PF_Err_NONE;
+
+    // Generate LUT values
+    for (A_long i = 0; i < LUT_SIZE; i++) {
         PF_FpLong x = static_cast<PF_FpLong>(i) / (LUT_SIZE - 1);
-        table[i] = CurvesData::evaluate(curve, x);
+        
+        // Find segment containing x
+        A_long segIndex = 0;
+        for (; segIndex < curve->num_points - 1; segIndex++) {
+            if (x <= curve->points[segIndex + 1].x) break;
+        }
+
+        // Linear interpolation within segment
+        PF_FpLong x0 = curve->points[segIndex].x;
+        PF_FpLong y0 = curve->points[segIndex].y;
+        PF_FpLong x1 = curve->points[segIndex + 1].x;
+        PF_FpLong y1 = curve->points[segIndex + 1].y;
+
+        PF_FpLong t = (x - x0) / (x1 - x0);
+        lut.values[i] = y0 + t * (y1 - y0);
     }
 
-    return PF_Err_NONE;
+    lut.isValid = true;
+    return err;
 }
 
-PF_Err LUTManager::InterpolateLUT(
-    PF_FpLong input, 
-    const PF_FpLong* table, 
-    PF_FpLong* output) const 
+PF_FpLong LUTManager::InterpolateLUT(
+    const LUTData& lut,
+    PF_FpLong input) const
 {
-    if (!table || !output) return PF_Err_BAD_CALLBACK_PARAM;
+    if (!lut.isValid) return input;
 
     // Clamp input to [0,1]
-    input = input < 0.0f ? 0.0f : (input > 1.0f ? 1.0f : input);
-    
-    // Convert to table index
-    PF_FpLong idx = input * (LUT_SIZE - 1);
-    A_long idx_low = static_cast<A_long>(idx);
-    A_long idx_high = idx_low + 1;
-    
-    if (idx_high >= LUT_SIZE) {
-        *output = table[LUT_SIZE - 1];
-    } else {
-        // Linear interpolation between table entries
-        PF_FpLong fract = idx - idx_low;
-        *output = table[idx_low] + fract * (table[idx_high] - table[idx_low]);
-    }
+    input = std::max(0.0, std::min(1.0, input));
 
-    return PF_Err_NONE;
+    // Convert to LUT index
+    PF_FpLong indexF = input * (LUT_SIZE - 1);
+    A_long index0 = static_cast<A_long>(indexF);
+    A_long index1 = std::min(index0 + 1, LUT_SIZE - 1);
+    PF_FpLong frac = indexF - index0;
+
+    // Linear interpolation between LUT entries
+    return lut.values[index0] + frac * (lut.values[index1] - lut.values[index0]);
 }

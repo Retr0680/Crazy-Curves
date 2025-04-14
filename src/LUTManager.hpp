@@ -12,20 +12,32 @@ public:
     }
 
     PF_Err InitializeLUTs(const CurveData* curves);
-    PF_Err ProcessPixel8(const PF_Pixel8* inP, PF_Pixel8* outP) const;
-    PF_Err ProcessPixelFloat(const PF_PixelFloat* inP, PF_PixelFloat* outP) const;
+    PF_Err UpdateLUTs(const CurveData* curves);
     void InvalidateLUTs();
-    bool AreLUTsValid() const { return lutsValid; }
+
+    PF_FpLong EvaluateRGB(PF_FpLong input) const;
+    PF_FpLong EvaluateRed(PF_FpLong input) const;
+    PF_FpLong EvaluateGreen(PF_FpLong input) const;
+    PF_FpLong EvaluateBlue(PF_FpLong input) const;
 
 private:
-    LUTManager() : lutsValid(false) {}
-    
     static const A_long LUT_SIZE = 256;
-    static const A_long NUM_CHANNELS = 4; // RGB + Master
+    
+    struct LUTData {
+        PF_FpLong values[LUT_SIZE];
+        bool isValid;
+    };
 
-    PF_FpLong lutTables[NUM_CHANNELS][LUT_SIZE];
-    bool lutsValid;
+    LUTData rgbLUT;
+    LUTData redLUT;
+    LUTData greenLUT;
+    LUTData blueLUT;
 
-    PF_Err BuildLUT(const CurveData* curve, PF_FpLong* table);
-    PF_Err InterpolateLUT(PF_FpLong input, const PF_FpLong* table, PF_FpLong* output) const;
+    PF_Err BuildLUT(
+        const CurveData* curve,
+        LUTData& lut);
+
+    PF_FpLong InterpolateLUT(
+        const LUTData& lut,
+        PF_FpLong input) const;
 };
