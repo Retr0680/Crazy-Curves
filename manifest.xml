@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.yourcompany.CrazyCurves" ExtensionBundleVersion="1.0" xmlns="http://www.adobe.com/CEP/manifest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="com.yourcompany.CrazyCurves" Version="1.0"/>
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- Targets After Effects (AEFT). Adjust version range as needed -->
+      <Host Name="AEFT" Version="[16.0,25.0]"/>
+    </HostList>
+    <LocaleList>
+      <Locale Code="All"/>
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="6.0"/>
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.yourcompany.CrazyCurves">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./main.js</ScriptPath>
+          <CEFCommandLine>
+            <Parameter>--allow-file-access-from-files</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>Crazy Curves</Menu>
+          <Geometry>
+            <Size>
+              <Width>400</Width>
+              <Height>600</Height>
+            </Size>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
