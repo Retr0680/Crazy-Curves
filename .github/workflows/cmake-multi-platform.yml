@@ -1,39 +1,38 @@
-name: CMake Build
+name: Build CEP Extension
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "03mini" ]
   pull_request:
-    branches: [ "main" ]
-
-env:
-  BUILD_TYPE: Release
+    branches: [ "o3mini" ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      # Checkout the source code
+      - uses: actions/checkout@v3
 
-    - name: Configure CMake
-      shell: pwsh
-      run: |
-        if (Test-Path -Path "build") {
-            Remove-Item -Recurse -Force build
-        }
-        New-Item -ItemType Directory -Path build
-        cd build
-        cmake -B . -S .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      # Set up Node.js (choose an appropriate version)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --config ${{env.BUILD_TYPE}}
+      # Install the packaging CLI tool
+      - name: Install zxp-cli
+        run: npm install -g @creative-zxp/zxp-cli
 
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: CrazyCurves-windows
-        path: build/${{env.BUILD_TYPE}}/*.dll
-        retention-days: 90
+      # Create a .zxp package from the extension folder
+      - name: Create ZXP Package
+        run: |
+          zxp -c Crazy-Curves -o Crazy-Curves.zxp
+
+      # Upload the produced .zxp file as an artifact
+      - name: Upload ZXP Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Crazy-Curves-zxp
+          path: Crazy-Curves.zxp
