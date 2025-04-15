@@ -39,7 +39,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/o3mini'
     steps:
       # Download the generated artifact
       - name: Download ZXP Artifact
