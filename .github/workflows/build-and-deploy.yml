@@ -1,0 +1,57 @@
+name: Build and Deploy CEP Extension
+
+on:
+  push:
+    branches: [ "o3mini" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout your repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Step 3: Install the packaging CLI tool
+      - name: Install zxp-cli
+        run: npm install -g @creative-zxp/zxp-cli
+
+      # Step 4: Build the .zxp package from your extension folder
+      - name: Build ZXP Package
+        run: |
+          zxp -c Crazy-Curves -o Crazy-Curves.zxp
+
+      # Step 5: Upload the generated .zxp file as a build artifact
+      - name: Upload ZXP Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Crazy-Curves-zxp
+          path: Crazy-Curves.zxp
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # Download the generated artifact
+      - name: Download ZXP Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Crazy-Curves-zxp
+          path: .
+
+      # Create a GitHub release and attach the .zxp file as an asset
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: Crazy-Curves.zxp
