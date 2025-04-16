@@ -72,8 +72,7 @@ jobs:
 
       - name: Download ZXPSignCmd.exe
         run: |
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          Invoke-WebRequest -Uri "https://github.com/Adobe-CEP/CEP-Resources/releases/download/1.0.0/ZXPSignCmd.exe" -OutFile ZXPSignCmd.exe
+          Invoke-WebRequest -Uri "https://github.com/Retr0680/Crazy-Curves/releases/download/tools/ZXPSignCmd.exe" -OutFile ZXPSignCmd.exe
 
       - name: Sign Extension (.zxp)
         run: |
