@@ -1,9 +1,14 @@
-name: Build and Package Crazy Curves ZXP
+name: 🚀 Crazy Curves ZXP Build
 
 on:
   push:
     branches: [v2]
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type (patch, minor, major)"
+        required: false
+        default: patch
 
 jobs:
   build:
@@ -29,14 +34,21 @@ jobs:
           openssl req -x509 -newkey rsa:2048 -keyout dummy-key.pem -out dummy-cert.pem -days 365 -nodes -subj "/C=US/ST=CA/L=SF/O=Dummy/OU=Dev/CN=localhost"
           openssl pkcs12 -export -out cert.p12 -inkey dummy-key.pem -in dummy-cert.pem -passout pass:password
 
-      - name: Auto-increment patch version in manifest.xml
+      - name: Auto-increment manifest.xml version
         run: |
           FILE=crazy-curves/CSXS/manifest.xml
           VER=$(xmlstarlet sel -t -v "/ExtensionManifest/@ExtensionBundleVersion" $FILE)
           MAJOR=$(echo $VER | cut -d. -f1)
           MINOR=$(echo $VER | cut -d. -f2)
           PATCH=$(echo $VER | cut -d. -f3)
-          NEW_VER="$MAJOR.$MINOR.$((PATCH + 1))"
+          case "${{ github.event.inputs.bump }}" in
+            major)
+              NEW_VER="$((MAJOR + 1)).0.0";;
+            minor)
+              NEW_VER="$MAJOR.$((MINOR + 1)).0";;
+            patch|*)
+              NEW_VER="$MAJOR.$MINOR.$((PATCH + 1))";;
+          esac
           xmlstarlet ed -P -L -u "/ExtensionManifest/@ExtensionBundleVersion" -v "$NEW_VER" $FILE
           echo "New version: $NEW_VER"
 
