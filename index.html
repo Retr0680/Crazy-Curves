@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Crazy Curves</title>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/panel.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="panel">
+    <h1>Crazy Curves</h1>
+
+    <div class="tabs">
+      <button data-tab="ease">Ease</button>
+      <button data-tab="elastic">Elastic</button>
+      <button data-tab="bounce">Bounce</button>
+      <button data-tab="distribute">Distribute</button>
+    </div>
+
+    <div id="ease" class="tab-content">
+      <img src="icons/ease-preview.gif">
+      <label>Ease Amount: <input type="range" id="easeAmount" min="0" max="100" value="50"></label>
+      <button onclick="applyEase()">Apply Ease</button>
+    </div>
+
+    <div id="elastic" class="tab-content">
+      <img src="icons/elastic-preview.gif">
+      <label>Amplitude: <input type="number" id="elasticAmplitude" value="1.0"></label>
+      <label>Frequency: <input type="number" id="elasticFrequency" value="2.0"></label>
+      <label>Decay: <input type="number" id="elasticDecay" value="5.0"></label>
+      <button onclick="applyElastic()">Apply Elastic</button>
+    </div>
+
+    <div id="bounce" class="tab-content">
+      <img src="icons/bounce-preview.gif">
+      <label>Height: <input type="number" id="bounceHeight" value="50"></label>
+      <label>Speed: <input type="number" id="bounceSpeed" value="1.0"></label>
+      <label>Decay: <input type="number" id="bounceDecay" value="3.0"></label>
+      <button onclick="applyBounce()">Apply Bounce</button>
+    </div>
+
+    <div id="distribute" class="tab-content">
+      <img src="icons/distribute-preview.gif">
+      <label>Frames Apart: <input type="number" id="distributeFrames" value="5"></label>
+      <button onclick="applyDistribute()">Distribute Keyframes</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+name: Build Crazy Curves ZXP
+
+on:
+  push:
+    branches: [v2]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Prepare ZXP folder structure
+      run: |
+        mkdir dist
+        cp -r crazy-curves dist/CrazyCurves
+
+    - name: Package extension as ZIP (unsigned)
+      run: |
+        cd dist
+        zip -r CrazyCurves.zip CrazyCurves
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CrazyCurves
+        path: dist/CrazyCurves.zip
