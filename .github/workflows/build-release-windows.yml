@@ -70,10 +70,10 @@ jobs:
         run: |
           [IO.File]::WriteAllBytes("cert.p12", [Convert]::FromBase64String("${{ env.CERT_P12_BASE64 }}"))
 
-      - name: Download ZXPSignCmd.exe (from GitHub release)
+      - name: Download ZXPSignCmd.exe
         run: |
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          Invoke-WebRequest -Uri "https://github.com/Adobe-CEP/CEP-Resources/releases/download/v1.0/ZXPSignCmd.exe" -OutFile ZXPSignCmd.exe
+          Invoke-WebRequest -Uri "https://github.com/Adobe-CEP/CEP-Resources/releases/download/1.0.0/ZXPSignCmd.exe" -OutFile ZXPSignCmd.exe
 
       - name: Sign Extension (.zxp)
         run: |
