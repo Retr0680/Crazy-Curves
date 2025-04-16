@@ -30,11 +30,14 @@ jobs:
       - name: Install xmlstarlet
         run: choco install xmlstarlet
 
-      - name: Generate Dummy Certificate (fallback)
-        if: env.CERT_P12_BASE64 == ''
+      - name: Prepare Certificate (decode or fallback dummy)
         run: |
-          $cert = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=CrazyCurves"
-          Export-PfxCertificate -Cert $cert -FilePath cert.p12 -Password (ConvertTo-SecureString -String "password" -Force -AsPlainText)
+          if ("${{ env.CERT_P12_BASE64 }}" -ne "") {
+            [IO.File]::WriteAllBytes("cert.p12", [Convert]::FromBase64String("${{ env.CERT_P12_BASE64 }}"))
+          } else {
+            $cert = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=CrazyCurves"
+            Export-PfxCertificate -Cert $cert -FilePath cert.p12 -Password (ConvertTo-SecureString -String "password" -Force -AsPlainText)
+          }
 
       - name: Auto-bump Version
         run: |
@@ -64,11 +67,6 @@ jobs:
 
       - name: Create Unsigned ZIP
         run: Compress-Archive -Path dist\CrazyCurves\* -DestinationPath dist\CrazyCurves.zip
-
-      - name: Decode Certificate
-        if: env.CERT_P12_BASE64 != ''
-        run: |
-          [IO.File]::WriteAllBytes("cert.p12", [Convert]::FromBase64String("${{ env.CERT_P12_BASE64 }}"))
 
       - name: Download ZXPSignCmd.exe
         run: |
