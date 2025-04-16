@@ -35,7 +35,7 @@ jobs:
 
       # Step 6: Upload the generated .zxp file as a build artifact
       - name: Upload ZXP Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.3.1
         with:
           name: Crazy-Curves-zxp
           path: Crazy-Curves.zxp
@@ -47,7 +47,7 @@ jobs:
     steps:
       # Download the generated artifact
       - name: Download ZXP Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v3.0.3
         with:
           name: Crazy-Curves-zxp
           path: .
@@ -56,6 +56,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GTOKEN }}
         with:
           files: Crazy-Curves.zxp
