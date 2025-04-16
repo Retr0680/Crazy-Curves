@@ -20,14 +20,25 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install OpenSSL
-        run: sudo apt-get install -y openssl
+      - name: Install tools
+        run: sudo apt-get install -y openssl xmlstarlet
 
       - name: Generate dummy .p12 certificate (if not provided)
         if: ${{ !secrets.CERT_P12_BASE64 }}
         run: |
           openssl req -x509 -newkey rsa:2048 -keyout dummy-key.pem -out dummy-cert.pem -days 365 -nodes -subj "/C=US/ST=CA/L=SF/O=Dummy/OU=Dev/CN=localhost"
           openssl pkcs12 -export -out cert.p12 -inkey dummy-key.pem -in dummy-cert.pem -passout pass:password
+
+      - name: Auto-increment patch version in manifest.xml
+        run: |
+          FILE=crazy-curves/CSXS/manifest.xml
+          VER=$(xmlstarlet sel -t -v "/ExtensionManifest/@ExtensionBundleVersion" $FILE)
+          MAJOR=$(echo $VER | cut -d. -f1)
+          MINOR=$(echo $VER | cut -d. -f2)
+          PATCH=$(echo $VER | cut -d. -f3)
+          NEW_VER="$MAJOR.$MINOR.$((PATCH + 1))"
+          xmlstarlet ed -P -L -u "/ExtensionManifest/@ExtensionBundleVersion" -v "$NEW_VER" $FILE
+          echo "New version: $NEW_VER"
 
       - name: Prepare ZXP folder structure
         run: |
@@ -71,7 +82,7 @@ jobs:
       - name: Extract version from manifest
         id: version
         run: |
-          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^"]+' crazy-curves/CSXS/manifest.xml)
+          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^\"]+' crazy-curves/CSXS/manifest.xml)
           echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release
