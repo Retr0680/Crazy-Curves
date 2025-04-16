@@ -10,6 +10,10 @@ on:
         required: false
         default: patch
 
+env:
+  CERT_P12_BASE64: ${{ secrets.CERT_P12_BASE64 }}
+  CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,8 +32,8 @@ jobs:
       - name: Install tools
         run: sudo apt-get install -y openssl xmlstarlet
 
-      - name: Generate dummy .p12 certificate (if not provided)
-        if: ${{ !secrets.CERT_P12_BASE64 }}
+      - name: Generate dummy .p12 certificate (fallback)
+        if: env.CERT_P12_BASE64 == ''
         run: |
           openssl req -x509 -newkey rsa:2048 -keyout dummy-key.pem -out dummy-cert.pem -days 365 -nodes -subj "/C=US/ST=CA/L=SF/O=Dummy/OU=Dev/CN=localhost"
           openssl pkcs12 -export -out cert.p12 -inkey dummy-key.pem -in dummy-cert.pem -passout pass:password
@@ -42,19 +46,16 @@ jobs:
           MINOR=$(echo $VER | cut -d. -f2)
           PATCH=$(echo $VER | cut -d. -f3)
           case "${{ github.event.inputs.bump }}" in
-            major)
-              NEW_VER="$((MAJOR + 1)).0.0";;
-            minor)
-              NEW_VER="$MAJOR.$((MINOR + 1)).0";;
-            patch|*)
-              NEW_VER="$MAJOR.$MINOR.$((PATCH + 1))";;
+            major) NEW_VER="$((MAJOR + 1)).0.0";;
+            minor) NEW_VER="$MAJOR.$((MINOR + 1)).0";;
+            patch|*) NEW_VER="$MAJOR.$MINOR.$((PATCH + 1))";;
           esac
           xmlstarlet ed -P -L -u "/ExtensionManifest/@ExtensionBundleVersion" -v "$NEW_VER" $FILE
           echo "New version: $NEW_VER"
 
-      - name: Prepare ZXP folder structure
+      - name: Prepare ZXP folder
         run: |
-          mkdir dist
+          mkdir -p dist
           cp -r crazy-curves dist/CrazyCurves
 
       - name: Zip the extension
@@ -62,11 +63,9 @@ jobs:
           cd dist
           zip -r CrazyCurves.zip CrazyCurves
 
-      - name: Decode signing certificate (if provided)
-        if: ${{ secrets.CERT_P12_BASE64 != '' }}
+      - name: Decode cert (only if provided)
+        if: env.CERT_P12_BASE64 != ''
         run: echo "$CERT_P12_BASE64" | base64 -d > cert.p12
-        env:
-          CERT_P12_BASE64: ${{ secrets.CERT_P12_BASE64 }}
 
       - name: Download ZXPSignCmd
         run: |
@@ -75,17 +74,15 @@ jobs:
 
       - name: Sign the ZXP file
         run: |
-          ./ZXPSignCmd -sign dist/CrazyCurves dist/CrazyCurves.zxp cert.p12 "$CERT_PASSWORD"
-        env:
-          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD || 'password' }}
+          ./ZXPSignCmd -sign dist/CrazyCurves dist/CrazyCurves.zxp cert.p12 "${CERT_PASSWORD:-password}"
 
-      - name: Upload unsigned ZIP artifact
+      - name: Upload unsigned ZIP
         uses: actions/upload-artifact@v3
         with:
           name: CrazyCurves-Unsigned
           path: dist/CrazyCurves.zip
 
-      - name: Upload signed ZXP artifact
+      - name: Upload signed ZXP
         uses: actions/upload-artifact@v3
         with:
           name: CrazyCurves-Signed-ZXP
@@ -94,7 +91,7 @@ jobs:
       - name: Extract version from manifest
         id: version
         run: |
-          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^\"]+' crazy-curves/CSXS/manifest.xml)
+          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^"]+' crazy-curves/CSXS/manifest.xml)
           echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release
