@@ -77,13 +77,13 @@ jobs:
           ./ZXPSignCmd -sign dist/CrazyCurves dist/CrazyCurves.zxp cert.p12 "${CERT_PASSWORD:-password}"
 
       - name: Upload unsigned ZIP
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v3
         with:
           name: CrazyCurves-Unsigned
           path: dist/CrazyCurves.zip
 
       - name: Upload signed ZXP
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v3
         with:
           name: CrazyCurves-Signed-ZXP
           path: dist/CrazyCurves.zxp
@@ -104,3 +104,14 @@ jobs:
           files: |
             dist/CrazyCurves.zip
             dist/CrazyCurves.zxp
+
+      - name: Generate CHANGELOG.md
+        run: npx auto-changelog --template keepachangelog --output CHANGELOG.md
+
+      - name: Commit updated CHANGELOG.md
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog" || echo "No changes to commit"
+          git push
