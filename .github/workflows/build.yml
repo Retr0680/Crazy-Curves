@@ -22,7 +22,7 @@ jobs:
       - name: Checkout v2 branch
         uses: actions/checkout@v3.5.2
         with:
-          ref: v2
+          ref: main
 
       - name: Set up Node.js
         uses: actions/setup-node@v3.8.1
@@ -40,7 +40,7 @@ jobs:
 
       - name: Auto-increment manifest.xml version
         run: |
-          FILE=crazy-curves/CSXS/manifest.xml
+          FILE=CSXS/manifest.xml
           VER=$(xmlstarlet sel -t -v "/ExtensionManifest/@ExtensionBundleVersion" $FILE)
           MAJOR=$(echo $VER | cut -d. -f1)
           MINOR=$(echo $VER | cut -d. -f2)
@@ -91,7 +91,7 @@ jobs:
       - name: Extract version from manifest
         id: version
         run: |
-          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^\"]+' crazy-curves/CSXS/manifest.xml)
+          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^"]+' CSXS/manifest.xml)
           echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release
