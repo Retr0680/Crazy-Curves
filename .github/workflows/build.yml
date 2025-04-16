@@ -1,4 +1,4 @@
-name: Build Crazy Curves ZXP
+name: Build and Package Crazy Curves ZXP
 
 on:
   push:
@@ -10,29 +10,77 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout v2 branch
+        uses: actions/checkout@v3
+        with:
+          ref: v2
 
-    - name: Set up Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install OpenSSL
+        run: sudo apt-get install -y openssl
 
-    - name: Prepare ZXP folder structure
-      run: |
-        mkdir dist
-        cp -r crazy-curves dist/CrazyCurves
+      - name: Generate dummy .p12 certificate (if not provided)
+        if: ${{ !secrets.CERT_P12_BASE64 }}
+        run: |
+          openssl req -x509 -newkey rsa:2048 -keyout dummy-key.pem -out dummy-cert.pem -days 365 -nodes -subj "/C=US/ST=CA/L=SF/O=Dummy/OU=Dev/CN=localhost"
+          openssl pkcs12 -export -out cert.p12 -inkey dummy-key.pem -in dummy-cert.pem -passout pass:password
 
-    - name: Package extension as ZIP (unsigned)
-      run: |
-        cd dist
-        zip -r CrazyCurves.zip CrazyCurves
+      - name: Prepare ZXP folder structure
+        run: |
+          mkdir dist
+          cp -r crazy-curves dist/CrazyCurves
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: CrazyCurves
-        path: dist/CrazyCurves.zip
+      - name: Zip the extension
+        run: |
+          cd dist
+          zip -r CrazyCurves.zip CrazyCurves
+
+      - name: Decode signing certificate (if provided)
+        if: ${{ secrets.CERT_P12_BASE64 != '' }}
+        run: echo "$CERT_P12_BASE64" | base64 -d > cert.p12
+        env:
+          CERT_P12_BASE64: ${{ secrets.CERT_P12_BASE64 }}
+
+      - name: Download ZXPSignCmd
+        run: |
+          wget https://github.com/Adobe-CEP/CEP-Resources/raw/master/ZXPSignCmd/mac/ZXPSignCmd
+          chmod +x ZXPSignCmd
+
+      - name: Sign the ZXP file
+        run: |
+          ./ZXPSignCmd -sign dist/CrazyCurves dist/CrazyCurves.zxp cert.p12 "$CERT_PASSWORD"
+        env:
+          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD || 'password' }}
+
+      - name: Upload unsigned ZIP artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CrazyCurves-Unsigned
+          path: dist/CrazyCurves.zip
+
+      - name: Upload signed ZXP artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CrazyCurves-Signed-ZXP
+          path: dist/CrazyCurves.zxp
+
+      - name: Extract version from manifest
+        id: version
+        run: |
+          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^"]+' crazy-curves/CSXS/manifest.xml)
+          echo "version=$VER" >> $GITHUB_OUTPUT
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: crazy-curves-v${{ steps.version.outputs.version }}
+          name: Crazy Curves v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/CrazyCurves.zip
+            dist/CrazyCurves.zxp
