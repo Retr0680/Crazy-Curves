@@ -51,6 +51,12 @@ jobs:
           $xml.Save($file)
           echo "version=$new" >> $env:GITHUB_OUTPUT
 
+      - name: Extract Version
+        id: version
+        run: |
+          $ver = ([xml](Get-Content "CSXS/manifest.xml")).ExtensionManifest.ExtensionBundleVersion
+          echo "version=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Prepare Extension Files
         run: |
           New-Item -ItemType Directory -Force -Path dist\CrazyCurves
@@ -64,9 +70,10 @@ jobs:
         run: |
           [IO.File]::WriteAllBytes("cert.p12", [Convert]::FromBase64String("${{ env.CERT_P12_BASE64 }}"))
 
-      - name: Download ZXPSignCmd.exe
+      - name: Download ZXPSignCmd.exe (from GitHub release)
         run: |
-          Invoke-WebRequest -Uri https://github.com/Adobe-CEP/CEP-Resources/raw/main/ZXPSignCmd/win/ZXPSignCmd.exe -OutFile ZXPSignCmd.exe
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest -Uri "https://github.com/Adobe-CEP/CEP-Resources/releases/download/v1.0/ZXPSignCmd.exe" -OutFile ZXPSignCmd.exe
 
       - name: Sign Extension (.zxp)
         run: |
@@ -87,8 +94,8 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: crazy-curves-v${{ github.run_number }}
-          name: Crazy Curves v${{ github.run_number }}
+          tag_name: crazy-curves-v${{ steps.version.outputs.version }}
+          name: Crazy Curves v${{ steps.version.outputs.version }}
           draft: false
           prerelease: false
           files: |
