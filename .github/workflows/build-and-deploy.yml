@@ -56,6 +56,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GTOKEN }}
+          GTOKEN: ${{ secrets.GTOKEN }}
         with:
           files: Crazy-Curves.zxp
