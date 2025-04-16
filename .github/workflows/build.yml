@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout v2 branch
+      - name: Checkout main branch
         uses: actions/checkout@v3.5.2
         with:
           ref: main
@@ -55,8 +55,8 @@ jobs:
 
       - name: Prepare ZXP folder
         run: |
-          mkdir -p dist
-          cp -r crazy-curves dist/CrazyCurves
+          mkdir -p dist/CrazyCurves
+          cp -r css js CSXS index.html dist/CrazyCurves
 
       - name: Zip the extension
         run: |
@@ -91,7 +91,7 @@ jobs:
       - name: Extract version from manifest
         id: version
         run: |
-          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^"]+' CSXS/manifest.xml)
+          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^\"]+' CSXS/manifest.xml)
           echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release
