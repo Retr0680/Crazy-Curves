@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="com.yourdomain.crazycurves" ExtensionBundleVersion="1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="7.0"
+    ExtensionBundleId="com.yourdomain.crazycurves"
+    ExtensionBundleVersion="1.0.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <ExtensionBundleName>Crazy Curves</ExtensionBundleName>
+
   <ExtensionList>
-    <Extension Id="crazy.curves.panel" Version="1.0.0"/>
+    <Extension Id="crazy.curves.panel" Version="1.0.0" />
   </ExtensionList>
+
   <ExecutionEnvironment>
     <HostList>
-      <Host Name="AEFT" Version="[15.0,25.0]"/>
+      <Host Name="AEFT" Version="[15.0,25.0]" />
     </HostList>
     <LocaleList>
-      <Locale Code="All"/>
+      <Locale Code="All" />
     </LocaleList>
     <RequiredRuntimeList>
-      <RequiredRuntime Name="CSXS" Version="6.0"/>
+      <RequiredRuntime Name="CSXS" Version="6.0" />
     </RequiredRuntimeList>
   </ExecutionEnvironment>
+
   <DispatchInfoList>
     <Extension Id="crazy.curves.panel">
       <DispatchInfo>
         <Resources>
           <MainPath>index.html</MainPath>
+          <ScriptPath>js/main.js</ScriptPath>
         </Resources>
         <Lifecycle>
           <AutoVisible>true</AutoVisible>
