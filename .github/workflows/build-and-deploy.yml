@@ -29,7 +29,11 @@ jobs:
         run: |
           zxp -c Crazy-Curves -o Crazy-Curves.zxp
 
-      # Step 5: Upload the generated .zxp file as a build artifact
+      # Step 5: Verify the generated file
+      - name: Verify ZXP File Existence
+        run: ls -la Crazy-Curves.zxp
+
+      # Step 6: Upload the generated .zxp file as a build artifact
       - name: Upload ZXP Build Artifact
         uses: actions/upload-artifact@v3
         with:
