@@ -2,7 +2,7 @@ name: 🚀 Crazy Curves ZXP Build
 
 on:
   push:
-    branches: [v2]
+    branches: [main]
   workflow_dispatch:
     inputs:
       bump:
@@ -77,13 +77,13 @@ jobs:
           ./ZXPSignCmd -sign dist/CrazyCurves dist/CrazyCurves.zxp cert.p12 "${CERT_PASSWORD:-password}"
 
       - name: Upload unsigned ZIP
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: CrazyCurves-Unsigned
           path: dist/CrazyCurves.zip
 
       - name: Upload signed ZXP
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: CrazyCurves-Signed-ZXP
           path: dist/CrazyCurves.zxp
@@ -91,7 +91,7 @@ jobs:
       - name: Extract version from manifest
         id: version
         run: |
-          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^"]+' crazy-curves/CSXS/manifest.xml)
+          VER=$(grep -oP '(?<=ExtensionBundleVersion=")[^\"]+' crazy-curves/CSXS/manifest.xml)
           echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub Release
