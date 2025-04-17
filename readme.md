@@ -49,7 +49,7 @@ zip -r CrazyCurves.zip crazy-curves/
 ```
 
 To trigger GitHub CI workflow:
-[![Build](https://github.com/Retr0680/Crazy-Curves/actions/workflows/build.yml/badge.svg)](https://github.com/Retr0680/Crazy-Curves/actions/workflows/build.yml)
+[![Build](https://github.com/Retr0680/Crazy-Curves/actions/workflows/build-release-windows.yml/badge.svg)](https://github.com/Retr0680/Crazy-Curves/actions/workflows/build-release-windows.yml)
 
 You can trigger the workflow manually and choose version bump type:
 - `patch` (default)
