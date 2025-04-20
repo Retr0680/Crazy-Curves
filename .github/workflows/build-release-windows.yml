@@ -1,0 +1,102 @@
+name: Crazy Curves ZXP Build & Release (Windows)
+
+on:
+  push:
+    branches: [jsx]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type (patch, minor, major)"
+        required: false
+        default: patch
+
+env:
+  CERT_P12_BASE64: ${{ secrets.CERT_P12_BASE64 }}
+  CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install xmlstarlet
+        run: choco install xmlstarlet
+
+      - name: Prepare Certificate (decode or fallback dummy)
+        run: |
+          if ("${{ env.CERT_P12_BASE64 }}" -ne "") {
+            [IO.File]::WriteAllBytes("cert.p12", [Convert]::FromBase64String("${{ env.CERT_P12_BASE64 }}"))
+          } else {
+            $cert = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=CrazyCurves"
+            Export-PfxCertificate -Cert $cert -FilePath cert.p12 -Password (ConvertTo-SecureString -String "password" -Force -AsPlainText)
+          }
+
+      - name: Auto-bump Version
+        run: |
+          $file = "CSXS/manifest.xml"
+          $xml = [xml](Get-Content $file)
+          $ver = $xml.ExtensionManifest.ExtensionBundleVersion
+          $parts = $ver.Split('.')
+          switch ("${{ github.event.inputs.bump }}") {
+            "major" { $new = "$([int]$parts[0] + 1).0.0" }
+            "minor" { $new = "$($parts[0]).$([int]$parts[1] + 1).0" }
+            default { $new = "$($parts[0]).$($parts[1]).$([int]$parts[2] + 1)" }
+          }
+          $xml.ExtensionManifest.ExtensionBundleVersion = $new
+          $xml.Save($file)
+          echo "version=$new" >> $env:GITHUB_OUTPUT
+
+      - name: Extract Version
+        id: version
+        run: |
+          $ver = ([xml](Get-Content "CSXS/manifest.xml")).ExtensionManifest.ExtensionBundleVersion
+          echo "version=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare Extension Files
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\CrazyCurves
+          Copy-Item -Recurse -Path * -Destination dist\CrazyCurves -Exclude .git*,dist,node_modules
+
+      - name: Create Unsigned ZIP
+        run: Compress-Archive -Path dist\CrazyCurves\* -DestinationPath dist\CrazyCurves.zip
+
+      - name: Download ZXPSignCmd.exe
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/Retr0680/Crazy-Curves/releases/download/tools/ZXPSignCmd.exe" -OutFile ZXPSignCmd.exe
+
+      - name: Sign Extension (.zxp)
+        run: |
+          .\ZXPSignCmd.exe -sign dist\CrazyCurves dist\CrazyCurves.zxp cert.p12 "${{ env.CERT_PASSWORD || 'password' }}"
+
+      - name: Upload Unsigned ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrazyCurves-Unsigned
+          path: dist/CrazyCurves.zip
+
+      - name: Upload Signed ZXP
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrazyCurves-Signed-ZXP
+          path: dist/CrazyCurves.zxp
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: crazy-curves-v${{ steps.version.outputs.version }}
+          name: Crazy Curves v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/CrazyCurves.zip
+            dist/CrazyCurves.zxp
+        env:
+          GITHUB_TOKEN: ${{ secrets.GTOKEN }}
