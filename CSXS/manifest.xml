@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ExtensionManifest
+    Version="6.0"
+    ExtensionBundleId="com.retr0680.crazycurves"
+    ExtensionBundleVersion="1.0.0"
+    xmlns="http://www.adobe.com/CEP/manifest"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <ExtensionList>
+    <Extension Id="com.retr0680.crazycurves" Version="1.0.0"/>
+  </ExtensionList>
+
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- AE CC 2019 is v16.x -->
+      <Host Name="AEFT" Version="[16.0,16.9]"/>
+    </HostList>
+    <LocaleList>
+      <Locale Code="All"/>
+    </LocaleList>
+    <RequiredRuntimeList>
+      <!-- CEP 6.0 is what AE 2019 uses -->
+      <RequiredRuntime Name="CSXS" Version="6.0"/>
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+
+  <DispatchInfoList>
+    <Extension Id="com.retr0680.crazycurves">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>index.html</MainPath>
+          <ScriptPath>js/main.js</ScriptPath>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>Crazy Curves</Menu>
+          <Geometry>
+            <Size>
+              <Width>400</Width>
+              <Height>500</Height>
+            </Size>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
