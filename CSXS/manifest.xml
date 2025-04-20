@@ -6,20 +6,23 @@
     xmlns="http://www.adobe.com/CEP/manifest"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+  <!-- This name shows up in the AE Extensions menu -->
+  <ExtensionBundleName>Crazy Curves</ExtensionBundleName>
+
   <ExtensionList>
     <Extension Id="com.retr0680.crazycurves" Version="1.0.0"/>
   </ExtensionList>
 
   <ExecutionEnvironment>
     <HostList>
-      <!-- AE CC 2019 is v16.x -->
+      <!-- CC 2019 is AEFT v16.x -->
       <Host Name="AEFT" Version="[16.0,16.9]"/>
     </HostList>
     <LocaleList>
       <Locale Code="All"/>
     </LocaleList>
     <RequiredRuntimeList>
-      <!-- CEP 6.0 is what AE 2019 uses -->
+      <!-- AE 2019 uses CEP/CSXS 6.0 -->
       <RequiredRuntime Name="CSXS" Version="6.0"/>
     </RequiredRuntimeList>
   </ExecutionEnvironment>
