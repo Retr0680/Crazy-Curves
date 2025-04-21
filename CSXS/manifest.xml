@@ -2,7 +2,7 @@
 <ExtensionManifest
     Version="6.0"
     ExtensionBundleId="com.retr0680.crazycurves"
-    ExtensionBundleVersion="1.0.0"
+    ExtensionBundleVersion="1.0.3"
     xmlns="http://www.adobe.com/CEP/manifest"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
